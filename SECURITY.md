@@ -2,11 +2,12 @@
 
 ## Supported versions
 
-Security fixes target the latest published version of `create-ai-blueprint`.
+Security fixes target the latest published version of
+`@akash07k/create-ai-blueprint`.
 Before reporting a problem, confirm it still exists after updating:
 
 ```bash
-npx create-ai-blueprint@latest update
+npx @akash07k/create-ai-blueprint@latest update
 ```
 
 ## Reporting a vulnerability

@@ -103,6 +103,7 @@ async function main(): Promise<void> {
     const installedPackageRoot = path.join(
       runnerDir,
       "node_modules",
+      "@akash07k",
       "create-ai-blueprint"
     );
     const binary = path.join(installedPackageRoot, "dist", "bin", "create-ai-blueprint.js");

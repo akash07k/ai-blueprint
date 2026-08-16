@@ -366,11 +366,15 @@ async function validatePackageMetadata(): Promise<void> {
     throw new Error("Package license must be MIT");
   }
 
-  if (metadata.homepage !== "https://ai-blueprint.dev") {
-    throw new Error("Package homepage must point to the official site");
+  if (metadata.name !== "@akash07k/create-ai-blueprint") {
+    throw new Error("Package name must use the fork npm scope");
   }
 
-  if (metadata.author !== "Brad Traversy") {
+  if (metadata.homepage !== "https://github.com/akash07k/ai-blueprint#readme") {
+    throw new Error("Package homepage must point to the fork repository");
+  }
+
+  if (metadata.author !== "akash07k") {
     throw new Error("Package author metadata is missing");
   }
 

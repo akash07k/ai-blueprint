@@ -479,11 +479,11 @@ function printHelp(): void {
 Install AI Blueprint into an already scaffolded app.
 
 Usage:
-  npx create-ai-blueprint@latest
-  npx create-ai-blueprint@latest update
-  npx create-ai-blueprint@latest -- --codex
-  npx create-ai-blueprint@latest -- --claude
-  npx create-ai-blueprint@latest -- --both
+  npx @akash07k/create-ai-blueprint@latest
+  npx @akash07k/create-ai-blueprint@latest update
+  npx @akash07k/create-ai-blueprint@latest -- --codex
+  npx @akash07k/create-ai-blueprint@latest -- --claude
+  npx @akash07k/create-ai-blueprint@latest -- --both
 
 Options:
   --codex          Install AGENTS.md, .agents/, and blueprint/

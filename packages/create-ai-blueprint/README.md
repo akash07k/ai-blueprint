@@ -1,8 +1,8 @@
-# create-ai-blueprint
+# @akash07k/create-ai-blueprint
 
 Install AI Blueprint into an already scaffolded app.
 
-[![npm version](https://img.shields.io/npm/v/create-ai-blueprint?style=flat-square&color=155eef)](https://www.npmjs.com/package/create-ai-blueprint)
+[![npm version](https://img.shields.io/npm/v/%40akash07k%2Fcreate-ai-blueprint?style=flat-square&color=155eef)](https://www.npmjs.com/package/%40akash07k%2Fcreate-ai-blueprint)
 [![Validate Blueprint](https://github.com/bradtraversy/ai-blueprint/actions/workflows/validate.yml/badge.svg)](https://github.com/bradtraversy/ai-blueprint/actions/workflows/validate.yml)
 [![MIT license](https://img.shields.io/npm/l/create-ai-blueprint?style=flat-square&color=155eef)](LICENSE)
 
@@ -15,13 +15,13 @@ Requires Node.js 24 or newer. Run the installer from an application that has
 already been scaffolded and initialized as a Git repository.
 
 ```bash
-npx create-ai-blueprint@latest
+npx @akash07k/create-ai-blueprint@latest
 ```
 
 You can also use npm's initializer form:
 
 ```bash
-npm create ai-blueprint@latest
+npx @akash07k/create-ai-blueprint@latest
 ```
 
 The installer copies the Blueprint workflow files into the current directory:
@@ -65,14 +65,12 @@ restart Claude Code in that folder so the newly added project skills appear.
 ## Options
 
 ```bash
-npx create-ai-blueprint@latest -- --codex
-npx create-ai-blueprint@latest -- --claude
-npx create-ai-blueprint@latest -- --both
-npx create-ai-blueprint@latest -- --force
-npx create-ai-blueprint@latest -- --target ./my-app
+npx @akash07k/create-ai-blueprint@latest -- --codex
+npx @akash07k/create-ai-blueprint@latest -- --claude
+npx @akash07k/create-ai-blueprint@latest -- --both
+npx @akash07k/create-ai-blueprint@latest -- --force
+npx @akash07k/create-ai-blueprint@latest -- --target ./my-app
 ```
-
-The same flags work with `npm create ai-blueprint@latest -- ...`.
 
 Use `--force` to overwrite existing Blueprint files. Without `--force`, the
 installer asks before overwriting in an interactive terminal and exits in
@@ -83,13 +81,13 @@ non-interactive runs.
 Preview the update plan:
 
 ```bash
-npx create-ai-blueprint@latest update --dry-run
+npx @akash07k/create-ai-blueprint@latest update --dry-run
 ```
 
 Apply the update:
 
 ```bash
-npx create-ai-blueprint@latest update
+npx @akash07k/create-ai-blueprint@latest update
 ```
 
 The updater detects the installed adapters and manages only these paths:

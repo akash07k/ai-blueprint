@@ -11,7 +11,7 @@
 <p align="center"><strong>A file-backed, spec-driven workflow for building real software with AI while staying in control.</strong></p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/create-ai-blueprint"><img src="https://img.shields.io/npm/v/create-ai-blueprint?style=flat-square&color=155eef" alt="npm version"></a>
+  <a href="https://www.npmjs.com/package/%40akash07k%2Fcreate-ai-blueprint"><img src="https://img.shields.io/npm/v/%40akash07k%2Fcreate-ai-blueprint?style=flat-square&color=155eef" alt="npm version"></a>
   <a href="https://github.com/bradtraversy/ai-blueprint/actions/workflows/validate.yml"><img src="https://github.com/bradtraversy/ai-blueprint/actions/workflows/validate.yml/badge.svg" alt="Validate Blueprint"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/bradtraversy/ai-blueprint?style=flat-square&color=155eef" alt="MIT license"></a>
 </p>
@@ -19,7 +19,7 @@
 <p align="center">
   <a href="https://ai-blueprint.dev">Official site</a> |
   <a href="https://ai-blueprint.dev/docs/">Documentation</a> |
-  <a href="https://www.npmjs.com/package/create-ai-blueprint">npm</a> |
+  <a href="https://www.npmjs.com/package/%40akash07k%2Fcreate-ai-blueprint">npm</a> |
   <a href="https://github.com/bradtraversy/ai-blueprint/releases">Releases</a> |
   <a href="CHANGELOG.md">Changelog</a>
 </p>
@@ -32,7 +32,7 @@ every diff before it lands.
 Install it inside an already scaffolded Git repository:
 
 ```bash
-npx create-ai-blueprint@latest
+npx @akash07k/create-ai-blueprint@latest
 ```
 
 ## What this is
@@ -124,10 +124,8 @@ git init
 **2. Add the blueprint** from inside the app:
 
 ```bash
-npx create-ai-blueprint@latest
+npx @akash07k/create-ai-blueprint@latest
 ```
-
-You can also run `npm create ai-blueprint@latest`.
 
 The installer asks which AI tool adapters you want and adds only the Blueprint
 workflow files your app needs.
@@ -224,13 +222,13 @@ run `/overview` and continue through the normal build loop.
 Preview an update before it writes anything:
 
 ```bash
-npx create-ai-blueprint@latest update --dry-run
+npx @akash07k/create-ai-blueprint@latest update --dry-run
 ```
 
 Then apply it:
 
 ```bash
-npx create-ai-blueprint@latest update
+npx @akash07k/create-ai-blueprint@latest update
 ```
 
 Updates manage only Blueprint-owned workflow files under `.agents/skills/`,

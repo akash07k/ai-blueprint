@@ -1,18 +1,18 @@
 {
-  "name": "create-ai-blueprint",
+  "name": "@akash07k/create-ai-blueprint",
   "version": "0.6.0",
   "description": "Install a file-backed, spec-driven AI development workflow into a scaffolded app.",
   "license": "MIT",
-  "author": "Brad Traversy",
+  "author": "akash07k",
   "type": "module",
-  "homepage": "https://ai-blueprint.dev",
+  "homepage": "https://github.com/akash07k/ai-blueprint#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bradtraversy/ai-blueprint.git",
+    "url": "git+https://github.com/akash07k/ai-blueprint.git",
     "directory": "packages/create-ai-blueprint"
   },
   "bugs": {
-    "url": "https://github.com/bradtraversy/ai-blueprint/issues"
+    "url": "https://github.com/akash07k/ai-blueprint/issues"
   },
   "keywords": [
     "ai",
