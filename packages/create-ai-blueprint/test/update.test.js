@@ -126,7 +126,7 @@ test("update replaces unchanged managed files and preserves project files", asyn
   assert.equal(result.updated, 2);
   assert.equal(result.added, 1);
   assert.match(
-    path.relative(targetDir, result.backupDir),
+    path.relative(targetDir, result.backupDir).replaceAll(path.sep, "/"),
     /^blueprint\/\.state\/backups\/2026-07-15T12-00-00Z-1\.0\.0-to-1\.1\.0-[a-f0-9]{8}$/
   );
   assert.equal(
