@@ -1,7 +1,6 @@
 import crypto from "node:crypto";
 import { spawnSync } from "node:child_process";
 import fs from "node:fs/promises";
-import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -64,7 +63,9 @@ function parseManifest(content: string): PackageManifest {
 }
 
 async function main(): Promise<void> {
-  const workspace = await fs.mkdtemp(path.join(os.tmpdir(), "ai-blueprint-package-"));
+  const workspace = await fs.mkdtemp(
+    path.join(repoRoot, "node_modules", ".ai-blueprint-package-")
+  );
 
   try {
     const artifactsDir = path.join(workspace, "artifacts");
@@ -72,7 +73,10 @@ async function main(): Promise<void> {
     await fs.mkdir(artifactsDir, { recursive: true });
     await fs.mkdir(runnerDir, { recursive: true });
 
-    runNpm(["pack", "--pack-destination", artifactsDir], packageRoot);
+    runNpm(
+      ["pack", "--pack-destination", path.relative(packageRoot, artifactsDir)],
+      packageRoot
+    );
     const artifacts = (await fs.readdir(artifactsDir)).filter((file) =>
       file.endsWith(".tgz")
     );
@@ -86,12 +90,12 @@ async function main(): Promise<void> {
       [
         "install",
         "--prefix",
-        runnerDir,
+        "runner",
         "--ignore-scripts",
         "--no-audit",
         "--no-fund",
         "--no-package-lock",
-        tarball
+        path.join("artifacts", artifacts[0])
       ],
       workspace
     );

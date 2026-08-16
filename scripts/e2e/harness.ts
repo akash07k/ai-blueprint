@@ -113,7 +113,7 @@ class Runner {
     fs.mkdirSync(artifacts, { recursive: true });
     fs.mkdirSync(runner, { recursive: true });
 
-    runNpm(["pack", "--pack-destination", artifacts], packageRoot);
+    runNpm(["pack", "--pack-destination", path.relative(packageRoot, artifacts)], packageRoot);
     const tarball = fs.readdirSync(artifacts).find((file) => file.endsWith(".tgz"));
 
     if (!tarball) {
@@ -124,12 +124,12 @@ class Runner {
       [
         "install",
         "--prefix",
-        runner,
+        "npm-runner",
         "--ignore-scripts",
         "--no-audit",
         "--no-fund",
         "--no-package-lock",
-        path.join(artifacts, tarball)
+        path.join("artifacts", tarball)
       ],
       this.runDir
     );

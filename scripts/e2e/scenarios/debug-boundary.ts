@@ -1,5 +1,5 @@
-const test = `import assert from "node:assert/strict";
-import { test } from "node:test";
+const test = `const assert = require("node:assert/strict");
+const { test } = require("node:test");
 const { total } = require("../src/cart-total");
 
 test("totals prices from request data", () => {
