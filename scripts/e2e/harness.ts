@@ -129,7 +129,7 @@ class Runner {
         "--no-audit",
         "--no-fund",
         "--no-package-lock",
-        path.join("artifacts", tarball)
+        `./artifacts/${tarball}`
       ],
       this.runDir
     );

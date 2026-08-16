@@ -95,7 +95,7 @@ async function main(): Promise<void> {
         "--no-audit",
         "--no-fund",
         "--no-package-lock",
-        path.join("artifacts", artifacts[0])
+        `./artifacts/${artifacts[0]}`
       ],
       workspace
     );
