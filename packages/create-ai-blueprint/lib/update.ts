@@ -5,8 +5,8 @@ import path from "node:path";
 const CONTROL_DIR = "blueprint/.state";
 const MANIFEST_PATH = `${CONTROL_DIR}/manifest.json`;
 const MANIFEST_SCHEMA_VERSION = 1;
-type Adapter = "codex" | "claude";
-type AdapterMode = Adapter | "both";
+type Adapter = "codex" | "claude" | "copilot";
+type AdapterMode = Adapter | "all" | "universal";
 
 interface TemplateFile {
   source: string;
@@ -89,15 +89,16 @@ interface InstallManifestOptions {
 const MANAGED_ROOTS: Record<Adapter | "common", readonly string[]> = {
   common: ["blueprint/README.md"],
   codex: [".agents/skills"],
-  claude: [".claude/skills"]
+  claude: [".claude/skills"],
+  copilot: [".agents/skills", ".github/copilot-instructions.md"]
 };
 
 function adapterListFromMode(adapter: AdapterMode): Adapter[] {
-  if (adapter === "both") {
-    return ["codex", "claude"];
+  if (adapter === "all") {
+    return ["codex", "claude", "copilot"];
   }
 
-  return [adapter];
+  return adapter === "universal" ? [] : [adapter];
 }
 
 function createManifest(
@@ -196,7 +197,7 @@ async function readManifest(targetDir: string): Promise<Manifest | null> {
 }
 
 function validateManifest(manifest: unknown): asserts manifest is Manifest {
-  const validAdapters: readonly Adapter[] = ["codex", "claude"];
+  const validAdapters: readonly Adapter[] = ["codex", "claude", "copilot"];
   const validManagedFiles =
     isRecord(manifest) &&
     isRecord(manifest.managedFiles) &&
@@ -219,7 +220,6 @@ function validateManifest(manifest: unknown): asserts manifest is Manifest {
     manifest.schemaVersion !== MANIFEST_SCHEMA_VERSION ||
     typeof manifest.version !== "string" ||
     !Array.isArray(manifest.adapters) ||
-    manifest.adapters.length === 0 ||
     !adaptersAreValid ||
     uniqueAdapters.size !== manifestAdapters.length ||
     !validManagedFiles
@@ -241,9 +241,9 @@ async function prepareUpdate({
   const manifest = await readManifest(realTargetDir);
   const adapters = await detectInstalledAdapters(realTargetDir, manifest);
 
-  if (adapters.length === 0) {
+  if (adapters.length === 0 && !manifest) {
     throw new Error(
-      "No installed Codex or Claude Blueprint skills were found in the target directory."
+      "No installed Codex, Claude Code, or GitHub Copilot Blueprint adapter was found in the target directory."
     );
   }
 
@@ -499,7 +499,11 @@ async function detectInstalledAdapters(
   targetDir: string,
   manifest: Manifest | null
 ): Promise<Adapter[]> {
-  const adapters = new Set<Adapter>(manifest?.adapters || []);
+  if (manifest) {
+    return manifest.adapters;
+  }
+
+  const adapters = new Set<Adapter>();
 
   if (await pathExists(targetPath(targetDir, ".agents/skills"))) {
     adapters.add("codex");
@@ -509,7 +513,11 @@ async function detectInstalledAdapters(
     adapters.add("claude");
   }
 
-  return (["codex", "claude"] as const).filter((adapter) => adapters.has(adapter));
+  if (await pathExists(targetPath(targetDir, ".github/copilot-instructions.md"))) {
+    adapters.add("copilot");
+  }
+
+  return (["codex", "claude", "copilot"] as const).filter((adapter) => adapters.has(adapter));
 }
 
 async function writeManifest(targetDir: string, manifest: Manifest): Promise<void> {

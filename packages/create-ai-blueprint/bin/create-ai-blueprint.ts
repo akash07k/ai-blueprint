@@ -28,7 +28,13 @@ interface TemplateEntry {
   target: string;
 }
 
-const adapterChoices = new Set<AdapterMode>(["codex", "claude", "both"]);
+const adapterChoices = new Set<AdapterMode>([
+  "all",
+  "claude",
+  "codex",
+  "copilot",
+  "universal"
+]);
 
 async function main() {
   const options = parseArgs(process.argv.slice(2));
@@ -159,7 +165,13 @@ function parseArgs(args: readonly string[]): CliOptions {
       continue;
     }
 
-    if (arg === "--codex" || arg === "--claude" || arg === "--both") {
+    if (
+      arg === "--all" ||
+      arg === "--claude" ||
+      arg === "--codex" ||
+      arg === "--copilot" ||
+      arg === "--universal"
+    ) {
       modeFlags.push(arg.slice(2) as AdapterMode);
       continue;
     }
@@ -183,14 +195,16 @@ function parseArgs(args: readonly string[]): CliOptions {
   }
 
   if (modeFlags.length > 1) {
-    throw new Error("Choose only one adapter option: --codex, --claude, or --both.");
+    throw new Error(
+      "Choose only one adapter option: --universal, --codex, --claude, --copilot, or --all."
+    );
   }
 
   options.adapter = modeFlags[0] || null;
 
   if (options.command === "update" && options.adapter) {
     throw new Error(
-      "Update detects the installed adapters. Do not pass --codex, --claude, or --both."
+      "Update detects the installed adapters. Do not pass an adapter option."
     );
   }
 
@@ -203,7 +217,7 @@ async function resolveAdapter(options: CliOptions): Promise<AdapterMode> {
   }
 
   if (options.yes || !process.stdin.isTTY) {
-    return "both";
+  return "all";
   }
 
   const rl = readline.createInterface({
@@ -213,28 +227,36 @@ async function resolveAdapter(options: CliOptions): Promise<AdapterMode> {
 
   try {
     const answer = await rl.question(
-      "Install which adapters? [1] Codex, [2] Claude Code, [3] both (default): "
+      "Install which adapter? [1] Universal, [2] Codex, [3] Claude Code, [4] GitHub Copilot, [5] all (default): "
     );
 
     const normalized = answer.trim().toLowerCase();
 
-    if (normalized === "" || normalized === "3" || normalized === "both") {
-      return "both";
+    if (normalized === "" || normalized === "5" || normalized === "all") {
+      return "all";
     }
 
-    if (normalized === "1" || normalized === "codex") {
+    if (normalized === "1" || normalized === "universal") {
+      return "universal";
+    }
+
+    if (normalized === "2" || normalized === "codex") {
       return "codex";
     }
 
     if (
-      normalized === "2" ||
+      normalized === "3" ||
       normalized === "claude" ||
       normalized === "claude code"
     ) {
       return "claude";
     }
 
-    throw new Error("Choose 1, 2, or 3.");
+    if (normalized === "4" || normalized === "copilot" || normalized === "github copilot") {
+      return "copilot";
+    }
+
+    throw new Error("Choose 1, 2, 3, 4, or 5.");
   } finally {
     rl.close();
   }
@@ -250,13 +272,20 @@ function getTemplateEntries(adapter: AdapterMode): TemplateEntry[] {
     { source: "blueprint", target: "blueprint" }
   ];
 
-  if (adapter === "codex" || adapter === "both") {
+  if (adapter === "codex" || adapter === "copilot" || adapter === "all") {
     entries.push({ source: ".agents", target: ".agents" });
   }
 
-  if (adapter === "claude" || adapter === "both") {
+  if (adapter === "claude" || adapter === "all") {
     entries.push({ source: "CLAUDE.md", target: "CLAUDE.md" });
     entries.push({ source: ".claude", target: ".claude" });
+  }
+
+  if (adapter === "copilot" || adapter === "all") {
+    entries.push({
+      source: ".github/copilot-instructions.md",
+      target: ".github/copilot-instructions.md"
+    });
   }
 
   return entries;
@@ -460,11 +489,19 @@ function getNextCommand(adapter: AdapterMode): string {
     return "/onboard";
   }
 
-  return "$onboard or /onboard";
+  if (adapter === "copilot") {
+    return "Ask Copilot to run the onboard skill.";
+  }
+
+  if (adapter === "universal") {
+    return "Ask your agent to follow the setup workflow in AGENTS.md.";
+  }
+
+  return "$onboard, /onboard, or ask Copilot to run the onboard skill.";
 }
 
 function printClaudeRestartNote(adapter: AdapterMode): void {
-  if (adapter === "codex") {
+  if (adapter !== "claude" && adapter !== "all") {
     return;
   }
 
@@ -483,12 +520,16 @@ Usage:
   npx @akash07k/create-ai-blueprint@latest update
   npx @akash07k/create-ai-blueprint@latest -- --codex
   npx @akash07k/create-ai-blueprint@latest -- --claude
-  npx @akash07k/create-ai-blueprint@latest -- --both
+  npx @akash07k/create-ai-blueprint@latest -- --copilot
+  npx @akash07k/create-ai-blueprint@latest -- --universal
+  npx @akash07k/create-ai-blueprint@latest -- --all
 
 Options:
+  --universal      Install AGENTS.md and blueprint/ for AGENTS.md-aware tools
   --codex          Install AGENTS.md, .agents/, and blueprint/
   --claude         Install AGENTS.md, CLAUDE.md, .claude/, and blueprint/
-  --both           Install both Codex and Claude Code adapters
+  --copilot        Install AGENTS.md, .agents/, .github/copilot-instructions.md, and blueprint/
+  --all            Install universal, Codex, Claude Code, and GitHub Copilot support
   --target, -t     Target directory, defaults to the current directory
   --force, -f      Install: overwrite matching files. Update: back up and replace managed conflicts
   --yes, -y        Use defaults in non-interactive installs

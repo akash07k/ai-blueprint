@@ -65,7 +65,7 @@ helping you write.
 | Small diffs | Implementation happens one reviewed step at a time, with proof each step works. |
 | File-backed state | Plans, current work, and history live in markdown files, so context clears are survivable. |
 | Findings gate | `/audit` findings live in a ledger with durable IDs; open or unreviewed P0/P1 findings block `/complete`. |
-| Tool adapters | Codex uses `.agents/skills`; Claude Code uses `.claude/skills`. |
+| Tool adapters | Codex and Copilot use `.agents/skills`; Claude Code uses `.claude/skills`; Copilot also uses `.github/copilot-instructions.md`. |
 | Optional visibility | Commit the workflow files for portability, or keep them local with `.gitignore`. |
 
 ## Contents
@@ -232,9 +232,9 @@ npx @akash07k/create-ai-blueprint@latest update
 ```
 
 Updates manage only Blueprint-owned workflow files under `.agents/skills/`,
-`.claude/skills/`, and `blueprint/README.md`. They do not overwrite `AGENTS.md`,
-`CLAUDE.md`, project plans, build plans, context, history, references, or
-prototypes.
+`.claude/skills/`, `.github/copilot-instructions.md`, and `blueprint/README.md`.
+They do not overwrite `AGENTS.md`, `CLAUDE.md`, project plans, build plans,
+context, history, references, or prototypes.
 
 New installs record managed-file hashes in `blueprint/.state/manifest.json`. If a
 managed file changes locally, the updater reports a conflict instead of silently
@@ -251,11 +251,12 @@ adopted into the manifest, while differing managed files are treated as conflict
 | --- | --- | --- |
 | Codex | Native project skills in `.agents/skills/` | `$feature`, `$implement`, or plain language |
 | Claude Code | Native project skills in `.claude/skills/` | `/feature`, `/implement`, and other slash commands |
-| Other AGENTS.md-aware tools | Shared project instructions plus readable skill files | Ask the agent to follow the matching `SKILL.md` |
+| GitHub Copilot | `.github/copilot-instructions.md` plus native CLI skills in `.agents/skills/` | Ask Copilot to run a Blueprint skill |
+| Other AGENTS.md-aware tools | Shared project instructions and file-backed state | Ask the agent to follow the Blueprint workflow in `AGENTS.md` |
 
-Install one adapter or both. The workflow state under `blueprint/` stays
-tool-independent, so a project can move between supported agents without moving
-its plan or history back into chat.
+Install universal instructions, one adapter, or all adapters. The workflow state
+under `blueprint/` stays tool-independent, so a project can move between
+supported agents without moving its plan or history back into chat.
 
 ## The AI workflow
 
@@ -784,9 +785,10 @@ step in `current-feature.md`.
         └── rollbacks/         (completed rollback records)
 ```
 
-`AGENTS.md`, `CLAUDE.md`, `.agents/`, and `.claude/` stay at the repo root
-because the tools that read them look there. Everything else owned by the
-workflow lives under `blueprint/`, so it stays out of your app code.
+`AGENTS.md`, `CLAUDE.md`, `.agents/`, `.claude/`, and
+`.github/copilot-instructions.md` stay at their tool-recognized paths. Everything
+else owned by the workflow lives under `blueprint/`, so it stays out of your app
+code.
 
 This file map shows the portable, committed layout. During `/onboard`, you can
 choose local-only mode instead. That keeps `AGENTS.md` public as a lightweight
@@ -798,6 +800,7 @@ project guide, but adds this to `.gitignore`:
 .claude/
 blueprint/
 CLAUDE.md
+.github/copilot-instructions.md
 ```
 
 In local-only mode, `/onboard` should keep public `AGENTS.md` focused on project

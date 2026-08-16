@@ -33,10 +33,15 @@ exposed through tool-specific adapters:
 
 - Codex: `.agents/skills/<skill>/SKILL.md`
 - Claude Code: `.claude/skills/<skill>/SKILL.md`
+- GitHub Copilot: `.github/copilot-instructions.md`, with Copilot CLI loading
+  the shared `.agents/skills/<skill>/SKILL.md` files
+- Other compatible tools: `AGENTS.md` and `blueprint/` provide the universal
+  workflow instructions and file-backed state
 
 Unused adapters can be removed. Codex-only projects can delete `CLAUDE.md` and
-`.claude/`. Claude Code-only projects can delete `.agents/`, but should keep
-`AGENTS.md` because `CLAUDE.md` imports it.
+`.claude/`. Claude Code-only projects can delete `.agents/` and
+`.github/copilot-instructions.md`, but should keep `AGENTS.md` because
+`CLAUDE.md` imports it. Copilot projects keep `.agents/` for Copilot CLI skills.
 
 When changing shared workflow behavior, update the matching skill in both
 adapter folders so Codex and Claude Code stay aligned.

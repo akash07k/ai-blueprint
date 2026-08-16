@@ -241,7 +241,7 @@ class Runner {
 }
 
 function getAgentName(): AgentName {
-  const configured = process.env.E2E_AGENT || "claude";
+  const configured = process.env.E2E_AGENT || "copilot";
 
   if (configured === "claude" || configured === "copilot") {
     return configured;
@@ -250,8 +250,8 @@ function getAgentName(): AgentName {
   throw new Error(`Unsupported E2E_AGENT: ${configured}. Use "claude" or "copilot".`);
 }
 
-function getDefaultAdapterFlag(): "--both" | "--claude" {
-  return getAgentName() === "copilot" ? "--both" : "--claude";
+function getDefaultAdapterFlag(): "--copilot" | "--claude" {
+  return getAgentName() === "copilot" ? "--copilot" : "--claude";
 }
 
 function ensureAgentAvailable(): void {

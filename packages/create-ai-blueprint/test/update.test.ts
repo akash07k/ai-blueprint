@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import test, { type TestContext } from "node:test";
 
-import { parseArgs } from "../bin/create-ai-blueprint.js";
+import { getTemplateEntries, parseArgs } from "../bin/create-ai-blueprint.js";
 import { CONTROL_DIR, MANIFEST_PATH, applyPreparedUpdate, prepareUpdate, readManifest, writeInstallManifest } from "../lib/update.js";
 
 test("parseArgs supports install and update modes", () => {
@@ -22,6 +22,71 @@ test("parseArgs supports install and update modes", () => {
   assert.throws(
     () => parseArgs(["update", "--codex"]),
     /Update detects the installed adapters/
+  );
+  assert.equal(parseArgs(["--universal"]).adapter, "universal");
+  assert.equal(parseArgs(["--copilot"]).adapter, "copilot");
+  assert.equal(parseArgs(["--all"]).adapter, "all");
+});
+
+test("Copilot and universal installs copy the expected adapter files", () => {
+  assert.deepEqual(
+    getTemplateEntries("universal").map((entry) => entry.target),
+    ["AGENTS.md", "blueprint"]
+  );
+  assert.deepEqual(
+    getTemplateEntries("copilot").map((entry) => entry.target),
+    ["AGENTS.md", "blueprint", ".agents", ".github/copilot-instructions.md"]
+  );
+});
+
+test("updates retain the Copilot adapter when it shares skills with Codex", async (t) => {
+  const workspace = await createWorkspace(t);
+  const templateRoot = path.join(workspace, "template");
+  const targetDir = path.join(workspace, "target");
+  const files = {
+    "blueprint/README.md": "Blueprint docs\n",
+    ".agents/skills/onboard/SKILL.md": "Onboard skill\n",
+    ".github/copilot-instructions.md": "Copilot instructions\n"
+  };
+
+  await writeFiles(templateRoot, files);
+  await writeFiles(targetDir, files);
+  await writeInstallManifest({
+    targetDir,
+    templateRoot,
+    version: "1.0.0",
+    adapter: "copilot"
+  });
+
+  const prepared = await prepareUpdate({
+    targetDir,
+    templateRoot,
+    version: "1.1.0"
+  });
+
+  assert.deepEqual(prepared.adapters, ["copilot"]);
+  assert.deepEqual(prepared.desiredManifest.adapters, ["copilot"]);
+});
+
+test("updates preserve universal installs without a native adapter", async (t) => {
+  const workspace = await createWorkspace(t);
+  const templateRoot = path.join(workspace, "template");
+  const targetDir = path.join(workspace, "target");
+  const files = { "blueprint/README.md": "Blueprint docs\n" };
+
+  await writeFiles(templateRoot, files);
+  await writeFiles(targetDir, files);
+  await writeInstallManifest({
+    targetDir,
+    templateRoot,
+    version: "1.0.0",
+    adapter: "universal"
+  });
+
+  assert.deepEqual((await readManifest(targetDir))?.adapters, []);
+  assert.deepEqual(
+    (await prepareUpdate({ targetDir, templateRoot, version: "1.1.0" })).adapters,
+    []
   );
 });
 
