@@ -96,10 +96,26 @@ same way if the file is missing (an older install):
 
     _No findings recorded. `/audit` appends findings here when it finds them._
 
-Then reset `blueprint/context/current-feature.md` to its current stub ("nothing
-in progress"), including `/rollback` alongside `/feature` and `/fix`. Don't
-commit yet; the next step makes one work commit covering the code and these doc
-changes. The archive is the build history.
+After archiving resolved findings, replace `blueprint/context/current-feature.md`
+with the canonical stub below. Do not paraphrase it or substitute an abbreviated
+"no work" stub. Before committing, read the file and confirm it exactly matches:
+
+    # Current Feature
+
+    > **Generated file.** Holds the one feature, fix, or rollback being built right now. Run
+    > `/feature <number-or-name>` to spec a build-plan feature, or `/fix "<bug>"` for
+    > an ad-hoc fix. Use `/rollback <completed-feature>` to plan a safe reversal.
+    > Build one thing at a time; `/complete` archives it under
+    > `blueprint/history/` and resets this file.
+
+    _Nothing in progress. Run `/feature`, `/fix`, or `/rollback` to start._
+
+When nothing remains in `blueprint/context/findings.md`, confirm it exactly
+matches the canonical stub above. Otherwise, preserve only its unresolved
+entries; do not replace the ledger with the empty stub.
+
+Do not commit yet; the next step makes one work commit covering the code and
+these documentation changes. The archive is the build history.
 
 **Discard consumed prototypes.** If this feature built the look from `prototypes/`
 - its Design reference pointed there and an early step ported `prototypes/theme.css`
