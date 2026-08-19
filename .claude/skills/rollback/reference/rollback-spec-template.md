@@ -3,8 +3,8 @@
 **Type:** Rollback
 **Target feature:** NN - Name
 **Target archive:** `blueprint/history/features/NN-name.md`
-**Target commit:** `<full commit SHA>`
-**Target parent:** `<full parent SHA>`
+**Target commit:** `<unique 12-character commit SHA>`
+**Target parent:** `<unique 12-character parent SHA>`
 **Reason:** Why this completed feature must be removed
 
 ## Goal

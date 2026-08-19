@@ -110,7 +110,8 @@ remediation or explicitly plan the dependent rollbacks.
 Write `blueprint/context/current-feature.md` using
 `reference/rollback-spec-template.md`. Fill in:
 
-- target feature, archive, exact commit, and parent commit
+- target feature and archive
+- target commit and parent commit as unique 12-character abbreviated SHA values
 - user's reason
 - product paths introduced or changed by the target
 - protected workflow paths
@@ -144,6 +145,8 @@ spec, then run `/implement` to create the rollback branch and apply it.
 - Preserve history. Never delete or rewrite the original feature archive.
 - Plan only. This skill writes the rollback spec and nothing else.
 - One completed feature per rollback.
+- Record both the target commit and its parent as 12-character abbreviated SHA
+  values. Each value must resolve uniquely to a commit in the current repository.
 - Never use `git reset --hard`, force-push, history rewriting, or broad file
   restoration.
 - Never infer permission to cascade into later features or destroy stored data.

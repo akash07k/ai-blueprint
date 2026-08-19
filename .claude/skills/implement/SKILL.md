@@ -60,7 +60,7 @@ spec. Reversing the whole commit would damage that state.
 Before the first rollback build step:
 
 1. Re-resolve the target archive's introducing commit and confirm it matches the
-   full Target commit SHA recorded in the approved spec.
+   unique 12-character Target commit SHA recorded in the approved spec.
 2. Confirm the target is an ancestor of `HEAD`, has the recorded single parent,
    and the only dirty path before applying the patch is the approved rollback
    spec. Stop on drift.
@@ -69,7 +69,7 @@ Before the first rollback build step:
    `prototypes/**`. Confirm the preview is non-empty and matches the Product
    paths in the spec.
 4. Apply that product diff in reverse with three-way conflict detection and
-   stage it. Substitute the two approved full SHAs before running:
+   stage it. Substitute the two approved 12-character SHAs before running:
 
        git diff --binary <target-parent> <target-commit> -- . \
          ':(exclude).agents/**' \
