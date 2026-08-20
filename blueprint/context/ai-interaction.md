@@ -14,16 +14,39 @@
 
 ## Output formatting
 
-Format every response for fast scanning, in whatever tool renders it. The skills
-point at this file for formatting, so tune this to taste and the change applies
-everywhere.
+Format every response for fast scanning and screen-reader accessibility. Agents
+and skills refer to this file for formatting, so tune this to taste and the
+change applies everywhere.
 
-- **Real markdown, not prose walls** - bold field labels, short lines, a blank line between blocks.
-- **Enumerations are lists** - a sequence of steps, options, or findings is a numbered or bulleted list, never an inline `(1)... (2)... (3)...` run crammed into a paragraph.
-- **Tables for matrices** - comparing things across the same fields (status per item, option tradeoffs) goes in a table, not stacked bullets.
-- **Backticks for code things** - identifiers, paths, commands, filenames.
-- **Lead with the answer** - state the result or the state first, supporting detail after.
-- **Don't over-format** - no deep bullet nests or decorative headers on a two-line reply. Concise still wins.
+- Use real Markdown and concise prose, not prose walls. Use bold labels, short
+  lines, and a blank line between blocks. Lead with the result or current state,
+  then provide supporting detail.
+- Use ASCII punctuation in generated prose. Do not use decorative Unicode
+  symbols, glyphs, emojis, ASCII art, or typographic quotation marks. Apply the
+  em dash, en dash, and ellipsis rules in `coding-standards.md` to prose as well
+  as written artifacts.
+- Use a concise summary line at the top of long responses.
+- Use headings to organize long responses. Do not add headings or decorative
+  structure to a short response.
+- Use numbered lists for steps, procedures, and other ordered information.
+  Use bullets only for unordered items. Do not cram a sequence of steps,
+  options, or findings into a dense inline list.
+- Use tables only when comparing the same fields across multiple items.
+- Summarize command output in labeled sections, with one result per line rather
+  than a dense unstructured transcript. Preserve raw errors, logs, and diffs
+  verbatim in fenced code blocks when they are material evidence.
+- Use fenced code blocks for standalone commands, code, paths, and other literal
+  text. Use backticks for identifiers, filenames, commands, and short paths
+  mentioned inline in prose.
+- Do not rely on color, layout, position, visual styling, or visual aids to
+  communicate meaning. State all important information in text.
+- Avoid references such as "above", "below", "left", "right", "this color", or
+  "the highlighted item" unless the referenced information is also identified
+  clearly in text.
+- Keep paragraphs short and state actions, outcomes, risks, and required user
+  input explicitly.
+- Do not over-format short responses with headings, deep bullet nests, or
+  decorative structure.
 
 ## Workflow
 
