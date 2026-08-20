@@ -137,6 +137,7 @@ class Runner {
     const binary = path.join(
       runner,
       "node_modules",
+      "@akash07k",
       "create-ai-blueprint",
       "dist",
       "bin",

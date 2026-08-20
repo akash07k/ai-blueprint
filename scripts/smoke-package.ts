@@ -104,6 +104,7 @@ async function main(): Promise<void> {
     const installedPackageRoot = path.join(
       runnerDir,
       "node_modules",
+      "@akash07k",
       "create-ai-blueprint"
     );
     const binary = path.join(installedPackageRoot, "dist", "bin", "create-ai-blueprint.js");
@@ -112,8 +113,11 @@ async function main(): Promise<void> {
       "Installed package metadata"
     );
 
-    if (typeof metadata.version !== "string") {
-      throw new Error("Installed package metadata has no valid version");
+    if (
+      metadata.name !== "@akash07k/create-ai-blueprint" ||
+      typeof metadata.version !== "string"
+    ) {
+      throw new Error("Installed package metadata does not match the scoped package");
     }
 
     const installedCommand = path.join(
@@ -139,6 +143,20 @@ async function main(): Promise<void> {
 
     if (versionResult.stdout.trim() !== metadata.version) {
       throw new Error("Installed command did not report the packaged version");
+    }
+
+    const installerHelpResult = runInstalledCommand(
+      installedCommand,
+      ["--help"],
+      workspace,
+      true
+    );
+
+    if (
+      !installerHelpResult.stdout.includes("npx @akash07k/create-ai-blueprint@latest") ||
+      !installerHelpResult.stdout.includes("status --json")
+    ) {
+      throw new Error("Installed command did not show scoped installer help");
     }
 
     const blueprintVersionResult = runInstalledCommand(
@@ -179,8 +197,11 @@ async function main(): Promise<void> {
       blueprintUpdateError = error instanceof Error ? error.message : String(error);
     }
 
-    if (!blueprintUpdateError.includes("supports project status only")) {
-      throw new Error("Installed blueprint command did not reject update");
+    if (
+      !blueprintUpdateError.includes("supports project status only") ||
+      !blueprintUpdateError.includes("npx @akash07k/create-ai-blueprint@latest")
+    ) {
+      throw new Error("Installed blueprint command did not show scoped status-only guidance");
     }
 
     await requirePath(path.join(installedPackageRoot, "dist", "lib", "update.js"));

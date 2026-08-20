@@ -67,7 +67,7 @@ test("global CLI installation is offered only after an interactive install", () 
   assert.equal(isGlobalCliInstallConfirmed("no"), false);
   assert.equal(
     getGlobalCliInstallCommand("0.9.0"),
-    "npm install --global create-ai-blueprint@0.9.0"
+    "npm install --global @akash07k/create-ai-blueprint@0.9.0"
   );
 });
 

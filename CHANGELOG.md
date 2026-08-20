@@ -1,9 +1,19 @@
 # Changelog
 
 Notable changes to AI Blueprint are documented here. Release dates reflect the
-published `create-ai-blueprint` package.
+published `@akash07k/create-ai-blueprint` package.
 
 ## Unreleased
+
+## [0.9.2] - 2026-08-21
+
+### Changed
+
+- Moved installer publishing to the public
+  `@akash07k/create-ai-blueprint` package.
+- Updated installer, update, status, and global CLI guidance for the scoped
+  package while retaining the `create-ai-blueprint` and status-only `blueprint`
+  executable names.
 
 ## [0.9.1] - 2026-08-20
 
@@ -133,6 +143,7 @@ published `create-ai-blueprint` package.
 - Added Codex and Claude Code adapters for the file-backed planning, feature,
   implementation, checking, audit, and completion workflow.
 
+[0.9.2]: https://github.com/akash07k/ai-blueprint/compare/v0.9.1...v0.9.2
 [0.9.1]: https://github.com/aiblueprinthq/ai-blueprint/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/aiblueprinthq/ai-blueprint/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/aiblueprinthq/ai-blueprint/compare/v0.7.0...v0.8.0

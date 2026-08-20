@@ -1,4 +1,4 @@
-name: Publish create-ai-blueprint
+name: Publish @akash07k/create-ai-blueprint
 
 on:
   push:
@@ -37,10 +37,10 @@ jobs:
       - name: Publish to npm
         run: |
           package_version=$(node -p "require('./package.json').version")
-          if npm view "create-ai-blueprint@$package_version" version >/dev/null 2>&1; then
-            echo "create-ai-blueprint@$package_version is already published."
+          if npm view "@akash07k/create-ai-blueprint@$package_version" version >/dev/null 2>&1; then
+            echo "@akash07k/create-ai-blueprint@$package_version is already published."
           else
-            npm publish
+            npm publish --access public
           fi
         working-directory: packages/create-ai-blueprint
 

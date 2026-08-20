@@ -23,7 +23,7 @@ body:
     id: version
     attributes:
       label: AI Blueprint version
-      description: Run `npm view create-ai-blueprint version` or check `blueprint/.state/manifest.json`.
+      description: Run `npm view @akash07k/create-ai-blueprint version` or check `blueprint/.state/manifest.json`.
       placeholder: 0.6.0
     validations:
       required: true

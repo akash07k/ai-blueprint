@@ -345,6 +345,15 @@ async function validatePackageMetadata(): Promise<void> {
   const scripts = typeof metadata.scripts === "object" && metadata.scripts !== null
     ? metadata.scripts as Record<string, unknown>
     : {};
+  const publishConfig = typeof metadata.publishConfig === "object" && metadata.publishConfig !== null
+    ? metadata.publishConfig as Record<string, unknown>
+    : {};
+  const repository = typeof metadata.repository === "object" && metadata.repository !== null
+    ? metadata.repository as Record<string, unknown>
+    : {};
+  const bugs = typeof metadata.bugs === "object" && metadata.bugs !== null
+    ? metadata.bugs as Record<string, unknown>
+    : {};
 
   if (bin["create-ai-blueprint"] !== "dist/bin/create-ai-blueprint.js") {
     throw new Error("Package bin entry does not point to the installer CLI");
@@ -366,12 +375,28 @@ async function validatePackageMetadata(): Promise<void> {
     throw new Error("Package license must be MIT");
   }
 
-  if (metadata.homepage !== "https://ai-blueprint.dev") {
-    throw new Error("Package homepage must point to the official site");
+  if (metadata.name !== "@akash07k/create-ai-blueprint") {
+    throw new Error("Package name must use the fork npm scope");
   }
 
-  if (metadata.author !== "Brad Traversy") {
-    throw new Error("Package author metadata is missing");
+  if (publishConfig.access !== "public") {
+    throw new Error("Scoped package must publish with public access");
+  }
+
+  if (metadata.homepage !== "https://github.com/akash07k/ai-blueprint#readme") {
+    throw new Error("Package homepage must point to the fork repository");
+  }
+
+  if (metadata.author !== "Akash Kakkar") {
+    throw new Error("Package author must identify the fork maintainer");
+  }
+
+  if (repository.url !== "git+https://github.com/akash07k/ai-blueprint.git") {
+    throw new Error("Package repository must point to the fork");
+  }
+
+  if (bugs.url !== "https://github.com/akash07k/ai-blueprint/issues") {
+    throw new Error("Package bugs URL must point to the fork");
   }
 
   for (const keyword of [

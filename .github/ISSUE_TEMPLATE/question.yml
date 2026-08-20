@@ -18,7 +18,7 @@ body:
     attributes:
       label: Documentation checked
       description: Link the guide or command page you already reviewed.
-      placeholder: https://ai-blueprint.dev/docs/
+      placeholder: https://github.com/akash07k/ai-blueprint#readme
     validations:
       required: true
   - type: dropdown

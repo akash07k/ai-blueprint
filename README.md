@@ -11,16 +11,16 @@
 <p align="center"><strong>A file-backed, spec-driven workflow for building real software with AI while staying in control.</strong></p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/create-ai-blueprint"><img src="https://img.shields.io/npm/v/create-ai-blueprint?style=flat-square&color=155eef" alt="npm version"></a>
-  <a href="https://github.com/aiblueprinthq/ai-blueprint/actions/workflows/validate.yml"><img src="https://github.com/aiblueprinthq/ai-blueprint/actions/workflows/validate.yml/badge.svg" alt="Validate Blueprint"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/aiblueprinthq/ai-blueprint?style=flat-square&color=155eef" alt="MIT license"></a>
+  <a href="https://www.npmjs.com/package/%40akash07k%2Fcreate-ai-blueprint"><img src="https://img.shields.io/npm/v/%40akash07k%2Fcreate-ai-blueprint?style=flat-square&color=155eef" alt="npm version"></a>
+  <a href="https://github.com/akash07k/ai-blueprint/actions/workflows/validate.yml"><img src="https://github.com/akash07k/ai-blueprint/actions/workflows/validate.yml/badge.svg" alt="Validate Blueprint"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/akash07k/ai-blueprint?style=flat-square&color=155eef" alt="MIT license"></a>
 </p>
 
 <p align="center">
-  <a href="https://ai-blueprint.dev">Official site</a> |
-  <a href="https://ai-blueprint.dev/docs/">Documentation</a> |
-  <a href="https://www.npmjs.com/package/create-ai-blueprint">npm</a> |
-  <a href="https://github.com/aiblueprinthq/ai-blueprint/releases">Releases</a> |
+  <a href="https://github.com/akash07k/ai-blueprint">Repository</a> |
+  <a href="https://github.com/akash07k/ai-blueprint#readme">Documentation</a> |
+  <a href="https://www.npmjs.com/package/%40akash07k%2Fcreate-ai-blueprint">npm</a> |
+  <a href="https://github.com/akash07k/ai-blueprint/releases">Releases</a> |
   <a href="CHANGELOG.md">Changelog</a>
 </p>
 
@@ -32,7 +32,7 @@ every diff before it lands.
 Install it inside an already scaffolded Git repository:
 
 ```bash
-npx create-ai-blueprint@latest
+npx @akash07k/create-ai-blueprint@latest
 ```
 
 ## What this is
@@ -124,10 +124,10 @@ git init
 **2. Add the blueprint** from inside the app:
 
 ```bash
-npx create-ai-blueprint@latest
+npx @akash07k/create-ai-blueprint@latest
 ```
 
-You can also run `npm create ai-blueprint@latest`.
+You can also run `npm create @akash07k/ai-blueprint@latest`.
 
 The installer asks which AI tool adapters you want and adds only the Blueprint
 workflow files your app needs.
@@ -224,13 +224,13 @@ run `/overview` and continue through the normal build loop.
 Preview an update before it writes anything:
 
 ```bash
-npx create-ai-blueprint@latest update --dry-run
+npx @akash07k/create-ai-blueprint@latest update --dry-run
 ```
 
 Then apply it:
 
 ```bash
-npx create-ai-blueprint@latest update
+npx @akash07k/create-ai-blueprint@latest update
 ```
 
 Updates manage only Blueprint-owned workflow files under `.agents/skills/`,
@@ -252,7 +252,7 @@ adopted into the manifest, while differing managed files are treated as conflict
 Run the read-only status command from a Blueprint project or a nested directory:
 
 ```bash
-npx create-ai-blueprint@latest status
+npx @akash07k/create-ai-blueprint@latest status
 ```
 
 It reports plan progress, active work, findings, Git state, drift warnings,
@@ -260,14 +260,14 @@ completion blockers, and one exact next action. Use JSON when another local tool
 needs the same versioned state:
 
 ```bash
-npx create-ai-blueprint@latest status --json
+npx @akash07k/create-ai-blueprint@latest status --json
 ```
 
 After an interactive Blueprint install, the installer offers to run this
 optional global installation command:
 
 ```bash
-npm install --global create-ai-blueprint@latest
+npm install --global @akash07k/create-ai-blueprint@latest
 ```
 
 The prompt defaults to no and never runs during non-interactive or `--yes`
@@ -275,8 +275,8 @@ installs. Global installation exposes `blueprint status`. Status reads Markdown
 and Git state without editing either one.
 
 The optional global `blueprint` command is status-only. Continue to use
-`npx create-ai-blueprint@latest` for installation and
-`npx create-ai-blueprint@latest update` for managed workflow updates.
+`npx @akash07k/create-ai-blueprint@latest` for installation and
+`npx @akash07k/create-ai-blueprint@latest update` for managed workflow updates.
 
 ## Tool support
 
@@ -695,7 +695,7 @@ checklist a review scopes to.
 
 Beyond the ledger, `/audit` does not edit files, install tools, commit, merge,
 or push. Full lifecycle details live in the
-[findings ledger docs](https://ai-blueprint.dev/docs/findings-ledger/).
+[findings ledger docs](https://github.com/akash07k/ai-blueprint#readme).
 
 ## Manual try guides
 
@@ -849,7 +849,7 @@ actual build loop should stay the same across both adapters.
 
 ## Support and contributing
 
-- Read the [documentation](https://ai-blueprint.dev/docs/) for setup, command,
+- Read the [documentation](https://github.com/akash07k/ai-blueprint#readme) for setup, command,
   and troubleshooting guidance.
 - Follow [SUPPORT.md](SUPPORT.md) for usage questions, reproducible bugs, and
   feature requests.

@@ -2,26 +2,26 @@
 
 ## Start with the documentation
 
-The [AI Blueprint documentation](https://ai-blueprint.dev/docs/) covers setup,
+The [AI Blueprint documentation](https://github.com/akash07k/ai-blueprint#readme) covers setup,
 updates, commands, file behavior, and troubleshooting.
 
 ## Ask a usage question
 
 Use the
-[usage question form](https://github.com/aiblueprinthq/ai-blueprint/issues/new?template=question.yml)
+[usage question form](https://github.com/akash07k/ai-blueprint/issues/new?template=question.yml)
 after checking the documentation and existing issues. Include the installed
 version, adapter, environment, and the specific step that blocked you.
 
 ## Report a bug
 
 Use the
-[bug report form](https://github.com/aiblueprinthq/ai-blueprint/issues/new?template=bug_report.yml)
+[bug report form](https://github.com/akash07k/ai-blueprint/issues/new?template=bug_report.yml)
 for reproducible installer or workflow problems.
 
 ## Request a feature
 
 Use the
-[feature request form](https://github.com/aiblueprinthq/ai-blueprint/issues/new?template=feature_request.yml)
+[feature request form](https://github.com/akash07k/ai-blueprint/issues/new?template=feature_request.yml)
 for changes to the reusable Blueprint workflow or installer. App-specific
 feature requests are out of scope.
 

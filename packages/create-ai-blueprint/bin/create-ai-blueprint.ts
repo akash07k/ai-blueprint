@@ -60,7 +60,7 @@ async function runCli(
 
   if (surface === "global" && options.command !== "status") {
     throw new Error(
-      "The global blueprint command supports project status only. Use `npx create-ai-blueprint@latest` to install Blueprint or `npx create-ai-blueprint@latest update` to update it."
+      "The global blueprint command supports project status only. Use `npx @akash07k/create-ai-blueprint@latest` to install Blueprint or `npx @akash07k/create-ai-blueprint@latest update` to update it."
     );
   }
 
@@ -579,12 +579,12 @@ function isGlobalCliInstallConfirmed(answer: string): boolean {
 }
 
 function getGlobalCliInstallCommand(version: string): string {
-  return `npm install --global create-ai-blueprint@${version}`;
+  return `npm install --global @akash07k/create-ai-blueprint@${version}`;
 }
 
 async function installGlobalCli(version: string): Promise<void> {
   const npmExecPath = process.env.npm_execpath;
-  const packageSpec = `create-ai-blueprint@${version}`;
+  const packageSpec = `@akash07k/create-ai-blueprint@${version}`;
   const command = npmExecPath
     ? process.execPath
     : process.platform === "win32"
@@ -623,18 +623,18 @@ function printOptionalGlobalCli(command: string): void {
 }
 
 function printHelp(): void {
-  console.log(`create-ai-blueprint
+  console.log(`@akash07k/create-ai-blueprint
 
 Install AI Blueprint into an already scaffolded app.
 
 Usage:
-  npx create-ai-blueprint@latest
-  npx create-ai-blueprint@latest update
-  npx create-ai-blueprint@latest status
-  npx create-ai-blueprint@latest status --json
-  npx create-ai-blueprint@latest -- --codex
-  npx create-ai-blueprint@latest -- --claude
-  npx create-ai-blueprint@latest -- --both
+  npx @akash07k/create-ai-blueprint@latest
+  npx @akash07k/create-ai-blueprint@latest update
+  npx @akash07k/create-ai-blueprint@latest status
+  npx @akash07k/create-ai-blueprint@latest status --json
+  npx @akash07k/create-ai-blueprint@latest -- --codex
+  npx @akash07k/create-ai-blueprint@latest -- --claude
+  npx @akash07k/create-ai-blueprint@latest -- --both
 
 Options:
   --codex          Install AGENTS.md, .agents/, and blueprint/
@@ -668,8 +668,8 @@ Options:
   --version, -v    Show package version
 
 Install or update Blueprint with:
-  npx create-ai-blueprint@latest
-  npx create-ai-blueprint@latest update`);
+  npx @akash07k/create-ai-blueprint@latest
+  npx @akash07k/create-ai-blueprint@latest update`);
 }
 
 function readPackageVersion(): string {

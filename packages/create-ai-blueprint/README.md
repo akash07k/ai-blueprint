@@ -1,27 +1,26 @@
-# create-ai-blueprint
+# @akash07k/create-ai-blueprint
 
 Install AI Blueprint into an already scaffolded app.
 
-[![npm version](https://img.shields.io/npm/v/create-ai-blueprint?style=flat-square&color=155eef)](https://www.npmjs.com/package/create-ai-blueprint)
-[![Validate Blueprint](https://github.com/aiblueprinthq/ai-blueprint/actions/workflows/validate.yml/badge.svg)](https://github.com/aiblueprinthq/ai-blueprint/actions/workflows/validate.yml)
-[![MIT license](https://img.shields.io/npm/l/create-ai-blueprint?style=flat-square&color=155eef)](LICENSE)
+[![npm version](https://img.shields.io/npm/v/%40akash07k%2Fcreate-ai-blueprint?style=flat-square&color=155eef)](https://www.npmjs.com/package/%40akash07k%2Fcreate-ai-blueprint)
+[![Validate Blueprint](https://github.com/akash07k/ai-blueprint/actions/workflows/validate.yml/badge.svg)](https://github.com/akash07k/ai-blueprint/actions/workflows/validate.yml)
+[![MIT license](https://img.shields.io/npm/l/%40akash07k%2Fcreate-ai-blueprint?style=flat-square&color=155eef)](LICENSE)
 
-[Official site](https://ai-blueprint.dev) |
-[Documentation](https://ai-blueprint.dev/docs/) |
-[Repository](https://github.com/aiblueprinthq/ai-blueprint) |
-[Changelog](https://github.com/aiblueprinthq/ai-blueprint/blob/main/CHANGELOG.md)
+[Repository](https://github.com/akash07k/ai-blueprint) |
+[Documentation](https://github.com/akash07k/ai-blueprint#readme) |
+[Changelog](https://github.com/akash07k/ai-blueprint/blob/main/CHANGELOG.md)
 
 Requires Node.js 22 or newer. Run the installer from an application that has
 already been scaffolded and initialized as a Git repository.
 
 ```bash
-npx create-ai-blueprint@latest
+npx @akash07k/create-ai-blueprint@latest
 ```
 
 You can also use npm's initializer form:
 
 ```bash
-npm create ai-blueprint@latest
+npm create @akash07k/ai-blueprint@latest
 ```
 
 The installer copies the Blueprint workflow files into the current directory:
@@ -65,14 +64,14 @@ restart Claude Code in that folder so the newly added project skills appear.
 ## Options
 
 ```bash
-npx create-ai-blueprint@latest -- --codex
-npx create-ai-blueprint@latest -- --claude
-npx create-ai-blueprint@latest -- --both
-npx create-ai-blueprint@latest -- --force
-npx create-ai-blueprint@latest -- --target ./my-app
+npx @akash07k/create-ai-blueprint@latest -- --codex
+npx @akash07k/create-ai-blueprint@latest -- --claude
+npx @akash07k/create-ai-blueprint@latest -- --both
+npx @akash07k/create-ai-blueprint@latest -- --force
+npx @akash07k/create-ai-blueprint@latest -- --target ./my-app
 ```
 
-The same flags work with `npm create ai-blueprint@latest -- ...`.
+The same flags work with `npm create @akash07k/ai-blueprint@latest -- ...`.
 
 Use `--force` to overwrite existing Blueprint files. Without `--force`, the
 installer asks before overwriting in an interactive terminal and exits in
@@ -83,13 +82,13 @@ non-interactive runs.
 Preview the update plan:
 
 ```bash
-npx create-ai-blueprint@latest update --dry-run
+npx @akash07k/create-ai-blueprint@latest update --dry-run
 ```
 
 Apply the update:
 
 ```bash
-npx create-ai-blueprint@latest update
+npx @akash07k/create-ai-blueprint@latest update
 ```
 
 The updater detects the installed adapters and manages only these paths:
@@ -117,7 +116,7 @@ Run the read-only status command from a Blueprint project or any directory
 inside it:
 
 ```bash
-npx create-ai-blueprint@latest status
+npx @akash07k/create-ai-blueprint@latest status
 ```
 
 It reports build-plan progress, active work, findings, Git state, drift
@@ -125,14 +124,14 @@ warnings, completion blockers, and one suggested next action. For scripts and
 integrations, request the versioned JSON object:
 
 ```bash
-npx create-ai-blueprint@latest status --json
+npx @akash07k/create-ai-blueprint@latest status --json
 ```
 
 After an interactive Blueprint install, the installer offers to run the
 following optional global installation command:
 
 ```bash
-npm install --global create-ai-blueprint@latest
+npm install --global @akash07k/create-ai-blueprint@latest
 ```
 
 The prompt defaults to no and is skipped for non-interactive and `--yes` runs.
@@ -141,19 +140,19 @@ Global installation exposes the shorter forms `blueprint status` and
 project directory. Status never edits project or Git state.
 
 The optional global `blueprint` command is status-only. Continue to use
-`npx create-ai-blueprint@latest` for installation and
-`npx create-ai-blueprint@latest update` for managed workflow updates.
+`npx @akash07k/create-ai-blueprint@latest` for installation and
+`npx @akash07k/create-ai-blueprint@latest update` for managed workflow updates.
 
 ## Help and contributing
 
-- Read the [full documentation](https://ai-blueprint.dev/docs/).
+- Read the [full documentation](https://github.com/akash07k/ai-blueprint#readme).
 - Report reproducible problems through the repository's
-  [issue forms](https://github.com/aiblueprinthq/ai-blueprint/issues/new/choose).
+  [issue forms](https://github.com/akash07k/ai-blueprint/issues/new/choose).
 - Follow the repository's
-  [security policy](https://github.com/aiblueprinthq/ai-blueprint/security/policy)
+  [security policy](https://github.com/akash07k/ai-blueprint/security/policy)
   for private vulnerability reports.
 - Read the
-  [contribution guide](https://github.com/aiblueprinthq/ai-blueprint/blob/main/CONTRIBUTING.md)
+  [contribution guide](https://github.com/akash07k/ai-blueprint/blob/main/CONTRIBUTING.md)
   before opening a pull request.
 
 ## License
