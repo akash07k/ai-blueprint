@@ -227,7 +227,7 @@ async function resolveAdapter(options: CliOptions): Promise<AdapterMode> {
 
   try {
     const answer = await rl.question(
-      "Install which adapter? [1] Universal, [2] Codex, [3] Claude Code, [4] GitHub Copilot, [5] all (default): "
+      "Install which adapter?\n1: Universal\n2: Codex\n3: Claude Code\n4: GitHub Copilot\n5: all (default): "
     );
 
     const normalized = answer.trim().toLowerCase();
