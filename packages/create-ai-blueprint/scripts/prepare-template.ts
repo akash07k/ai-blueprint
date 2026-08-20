@@ -27,6 +27,11 @@ async function main(): Promise<void> {
     path.join(repoRoot, "README.md"),
     path.join(templateRoot, "blueprint", "README.md")
   );
+  await fs.mkdir(path.join(templateRoot, ".github"), { recursive: true });
+  await fs.copyFile(
+    path.join(repoRoot, ".github", "copilot-instructions.md"),
+    path.join(templateRoot, ".github", "copilot-instructions.md")
+  );
 }
 
 main().catch((error: unknown) => {

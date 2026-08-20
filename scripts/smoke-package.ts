@@ -8,7 +8,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "..");
 const packageRoot = path.join(repoRoot, "packages", "create-ai-blueprint");
 
-type Adapter = "codex" | "claude";
+type Adapter = "codex" | "claude" | "copilot";
 
 interface PackageManifest {
   schemaVersion: number;
@@ -18,9 +18,12 @@ interface PackageManifest {
 }
 
 const modes: Record<string, Adapter[]> = {
+  default: ["claude", "codex", "copilot"],
+  universal: [],
   codex: ["codex"],
   claude: ["claude"],
-  both: ["claude", "codex"]
+  copilot: ["copilot"],
+  all: ["claude", "codex", "copilot"]
 };
 
 function getErrorCode(error: unknown): string | undefined {
@@ -46,7 +49,10 @@ function parseManifest(content: string): PackageManifest {
     typeof manifest.schemaVersion !== "number" ||
     typeof manifest.version !== "string" ||
     !Array.isArray(manifest.adapters) ||
-    !manifest.adapters.every((adapter): adapter is Adapter => adapter === "codex" || adapter === "claude") ||
+    !manifest.adapters.every(
+      (adapter): adapter is Adapter =>
+        adapter === "codex" || adapter === "claude" || adapter === "copilot"
+    ) ||
     typeof manifest.managedFiles !== "object" ||
     manifest.managedFiles === null ||
     Array.isArray(manifest.managedFiles)
@@ -125,7 +131,6 @@ async function main(): Promise<void> {
     );
     const versionResult = runInstalledCommand(
       installedCommand,
-      ["--version"],
       workspace,
       true
     );
@@ -145,7 +150,13 @@ async function main(): Promise<void> {
       await fs.mkdir(targetDir, { recursive: true });
       run(
         process.execPath,
-        [binary, "--target", targetDir, `--${mode}`, "--yes"],
+        [
+          binary,
+          "--target",
+          targetDir,
+          ...(mode === "default" ? [] : [`--${mode}`]),
+          "--yes"
+        ],
         workspace
       );
       await validateInstall(targetDir, metadata.version, adapters);
@@ -171,7 +182,9 @@ async function main(): Promise<void> {
       }
     }
 
-    console.log("Packed installer passed for codex, claude, and both adapter modes.");
+    console.log(
+      "Packed installer passed for the default, universal, Codex, Claude Code, GitHub Copilot, and all adapter modes."
+    );
   } finally {
     await fs.rm(workspace, { recursive: true, force: true });
   }
@@ -184,6 +197,8 @@ async function validateInstall(
 ): Promise<void> {
   const expectsCodex = adapters.includes("codex");
   const expectsClaude = adapters.includes("claude");
+  const expectsCopilot = adapters.includes("copilot");
+  const expectsSharedSkills = expectsCodex || expectsCopilot;
   const expectedPaths = [
     "AGENTS.md",
     "blueprint/README.md",
@@ -194,7 +209,7 @@ async function validateInstall(
     "blueprint/.state/.gitignore"
   ];
 
-  if (expectsCodex) {
+  if (expectsSharedSkills) {
     expectedPaths.push(
       ".agents/skills/discovery/SKILL.md",
       ".agents/skills/onboard/SKILL.md",
@@ -211,6 +226,10 @@ async function validateInstall(
     );
   }
 
+  if (expectsCopilot) {
+    expectedPaths.push(".github/copilot-instructions.md");
+  }
+
   for (const relativePath of expectedPaths) {
     await requirePath(path.join(targetDir, ...relativePath.split("/")));
   }
@@ -218,13 +237,17 @@ async function validateInstall(
   await requireMissing(path.join(targetDir, "README.md"));
   await requireMissing(path.join(targetDir, ".ai-blueprint"));
 
-  if (!expectsCodex) {
+  if (!expectsSharedSkills) {
     await requireMissing(path.join(targetDir, ".agents"));
   }
 
   if (!expectsClaude) {
     await requireMissing(path.join(targetDir, ".claude"));
     await requireMissing(path.join(targetDir, "CLAUDE.md"));
+  }
+
+  if (!expectsCopilot) {
+    await requireMissing(path.join(targetDir, ".github", "copilot-instructions.md"));
   }
 
   const manifest = parseManifest(
@@ -250,7 +273,7 @@ async function validateInstall(
 
   const expectedManagedFiles = ["blueprint/README.md"];
 
-  if (expectsCodex) {
+  if (expectsSharedSkills) {
     expectedManagedFiles.push(
       ...(await listFiles(path.join(targetDir, ".agents", "skills"))).map(
         (file) => `.agents/skills/${file}`
@@ -264,6 +287,10 @@ async function validateInstall(
         (file) => `.claude/skills/${file}`
       )
     );
+  }
+
+  if (expectsCopilot) {
+    expectedManagedFiles.push(".github/copilot-instructions.md");
   }
 
   const installedManagedFiles = Object.keys(manifest.managedFiles).sort();
@@ -316,11 +343,13 @@ function run(
   command: string,
   args: readonly string[],
   cwd: string,
-  capture = false
+  capture = false,
+  shell = false
 ) {
   const result = spawnSync(command, args, {
     cwd,
     encoding: "utf8",
+    shell,
     env: {
       ...process.env,
       npm_config_audit: "false",
@@ -357,22 +386,12 @@ function runNpm(args: string[], cwd: string) {
   ], cwd);
 }
 
-function runInstalledCommand(
-  command: string,
-  args: readonly string[],
-  cwd: string,
-  capture = false
-) {
+function runInstalledCommand(command: string, cwd: string, capture = false) {
   if (process.platform !== "win32") {
-    return run(command, args, cwd, capture);
+    return run(command, ["--version"], cwd, capture);
   }
 
-  return run(
-    process.env.ComSpec || "cmd.exe",
-    ["/d", "/s", "/c", `"${command}" ${args.join(" ")}`],
-    cwd,
-    capture
-  );
+  return run(`"${command}" --version`, [], cwd, capture, true);
 }
 
 async function requirePath(filePath: string): Promise<void> {
