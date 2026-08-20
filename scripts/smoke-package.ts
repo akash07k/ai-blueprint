@@ -191,7 +191,8 @@ async function main(): Promise<void> {
     await requireMissing(path.join(installedPackageRoot, "scripts", "e2e"));
 
     for (const [mode, adapters] of Object.entries(modes)) {
-      const targetDir = path.join(workspace, `target-${mode}`);
+      const targetName = `target-${mode} with spaces`;
+      const targetDir = path.join(workspace, targetName);
       await fs.mkdir(targetDir, { recursive: true });
       const installResult = run(
         process.execPath,
@@ -213,7 +214,7 @@ async function main(): Promise<void> {
         true
       );
 
-      if (!statusResult.stdout.includes(`Blueprint Status  target-${mode}`)) {
+      if (!statusResult.stdout.includes(`Blueprint Status  ${targetName}`)) {
         throw new Error(`${mode} status smoke test did not identify the project`);
       }
 
@@ -228,7 +229,7 @@ async function main(): Promise<void> {
         true
       );
 
-      if (!blueprintStatusResult.stdout.includes(`Blueprint Status  target-${mode}`)) {
+      if (!blueprintStatusResult.stdout.includes(`Blueprint Status  ${targetName}`)) {
         throw new Error(`${mode} blueprint alias did not report project status`);
       }
 
@@ -454,7 +455,8 @@ function run(
   command: string,
   args: readonly string[],
   cwd: string,
-  capture = false
+  capture = false,
+  windowsVerbatimArguments = false
 ) {
   const result = spawnSync(command, args, {
     cwd,
@@ -465,7 +467,8 @@ function run(
       npm_config_fund: "false",
       npm_config_update_notifier: "false"
     },
-    stdio: capture ? "pipe" : "inherit"
+    stdio: capture ? "pipe" : "inherit",
+    windowsVerbatimArguments
   });
 
   if (result.error) {
@@ -507,10 +510,20 @@ function runInstalledCommand(
 
   return run(
     process.env.ComSpec || "cmd.exe",
-    ["/d", "/s", "/c", `"${command}" ${args.join(" ")}`],
+    [
+      "/d",
+      "/s",
+      "/c",
+      `call "${command}" ${args.map(quoteForCmd).join(" ")}`
+    ],
     cwd,
-    capture
+    capture,
+    true
   );
+}
+
+function quoteForCmd(argument: string): string {
+  return `"${argument.replaceAll('"', '""')}"`;
 }
 
 async function requirePath(filePath: string): Promise<void> {
