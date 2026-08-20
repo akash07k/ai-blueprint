@@ -35,6 +35,11 @@ Install it inside an already scaffolded Git repository:
 npx @akash07k/create-ai-blueprint@latest
 ```
 
+GitHub Copilot CLI is the default installer and workflow adapter. Omitted,
+`--yes`, and non-interactive installs add `AGENTS.md`, `.agents/skills/`, and
+`blueprint/`. The installer does not create or manage
+`.github/copilot-instructions.md`.
+
 ## What this is
 
 Vibe coding is describing a vague thing and accepting whatever the AI returns.
@@ -65,7 +70,7 @@ helping you write.
 | Small diffs | Implementation happens one reviewed step at a time, with proof each step works. |
 | File-backed state | Plans, current work, and history live in markdown files, so context clears are survivable. |
 | Findings gate | `/audit` findings live in a ledger with durable IDs; open or unreviewed P0/P1 findings block `/complete`. |
-| Tool adapters | Codex uses `.agents/skills`; Claude Code uses `.claude/skills`. |
+| Tool adapters | GitHub Copilot CLI is the default and uses `AGENTS.md` plus `.agents/skills`; Codex can use the same skills, and Claude Code uses `.claude/skills`. |
 | Optional visibility | Commit the workflow files for portability, or keep them local with `.gitignore`. |
 
 ## Contents
@@ -129,14 +134,15 @@ npx @akash07k/create-ai-blueprint@latest
 
 You can also run `npm create @akash07k/ai-blueprint@latest`.
 
-The installer asks which AI tool adapters you want and adds only the Blueprint
-workflow files your app needs.
+The installer defaults to GitHub Copilot CLI and adds only `AGENTS.md`,
+`.agents/skills/`, and `blueprint/`. Use `--codex`, `--claude`, or `--all` when
+you need another adapter; `--both` remains a deprecated alias for `--all`.
 
 > [!IMPORTANT]
-> After installing, run `/onboard` before filling in plans or running
-> `/overview`. This is the setup pass that makes the Blueprint match your actual
-> project. If Claude Code was already open when the Blueprint was installed,
-> restart Claude Code in that folder so the newly added project skills appear.
+> After installing, ask GitHub Copilot to run the `onboard` skill before filling
+> in plans or running `overview`. This setup pass makes the Blueprint match your
+> actual project. If Claude Code was already open when its optional adapter was
+> installed, restart Claude Code so the newly added project skills appear.
 
 **3. Run onboard before anything else.** This detects the stack and may edit the
 setup files that ship with the overlay: `AGENTS.md` commands, the `CLAUDE.md`
@@ -146,7 +152,7 @@ README placement. It also asks whether Blueprint workflow files should be
 committed or kept local-only through `.gitignore`:
 
 ```text
-/onboard
+Ask Copilot to run the onboard skill.
 ```
 
 In Codex, invoke it as `$onboard`. In Claude Code, invoke it as `/onboard`.
@@ -233,10 +239,11 @@ Then apply it:
 npx @akash07k/create-ai-blueprint@latest update
 ```
 
-Updates manage only Blueprint-owned workflow files under `.agents/skills/`,
-`.claude/skills/`, and `blueprint/README.md`. They do not overwrite `AGENTS.md`,
-`CLAUDE.md`, project plans, build plans, context, history, references, or
-prototypes.
+Updates use manifest-backed adapters exactly as recorded. Manifest-less
+`.agents/skills/` installs retain legacy Codex inference. They manage only
+Blueprint-owned workflow files under `.agents/skills/`, `.claude/skills/`, and
+`blueprint/README.md`. They do not overwrite `AGENTS.md`, `CLAUDE.md`, project
+plans, build plans, context, history, references, or prototypes.
 
 New installs record managed-file hashes in `blueprint/.state/manifest.json`. If a
 managed file changes locally, the updater reports a conflict instead of silently
@@ -282,13 +289,15 @@ The optional global `blueprint` command is status-only. Continue to use
 
 | Tool | Support | Invocation |
 | --- | --- | --- |
+| GitHub Copilot CLI | `AGENTS.md` and `.agents/skills/` | Ask naturally, for example "run the feature skill" |
 | Codex | Native project skills in `.agents/skills/` | `$feature`, `$implement`, or plain language |
 | Claude Code | Native project skills in `.claude/skills/` | `/feature`, `/implement`, and other slash commands |
 | Other AGENTS.md-aware tools | Shared project instructions plus readable skill files | Ask the agent to follow the matching `SKILL.md` |
 
-Install one adapter or both. The workflow state under `blueprint/` stays
-tool-independent, so a project can move between supported agents without moving
-its plan or history back into chat.
+Install GitHub Copilot by default, or explicitly choose Codex, Claude Code, or
+all adapters. The workflow state under `blueprint/` stays tool-independent, so a
+project can move between supported agents without moving its plan or history back
+into chat.
 
 ## The AI workflow
 
@@ -818,8 +827,10 @@ step in `current-feature.md`.
 ```
 
 `AGENTS.md`, `CLAUDE.md`, `.agents/`, and `.claude/` stay at the repo root
-because the tools that read them look there. Everything else owned by the
-workflow lives under `blueprint/`, so it stays out of your app code.
+because the tools that read them look there. GitHub Copilot does not require a
+managed `.github/copilot-instructions.md`, so the installer leaves that path
+alone. Everything else owned by the workflow lives under `blueprint/`, so it
+stays out of your app code.
 
 This file map shows the portable, committed layout. During `/onboard`, you can
 choose local-only mode instead. That keeps `AGENTS.md` public as a lightweight
@@ -885,17 +896,19 @@ project plan. The `/prototype` helper can create throwaway static mockups in
 
 ### Works in other tools
 
-The blueprint is not Claude-specific. `AGENTS.md` is the cross-tool entry point,
-`.agents/skills` exposes the workflow to Codex, and `.claude/skills` exposes it
-to Claude Code.
+The blueprint is GitHub Copilot-first, not Copilot-only. `AGENTS.md` is the
+default cross-tool entry point, `.agents/skills` exposes the workflow to GitHub
+Copilot and Codex, and `.claude/skills` exposes it to Claude Code.
 
-You do not have to keep both adapters. For Codex-only work, keep `AGENTS.md`,
-`.agents/`, and `blueprint/`. For Claude Code-only work, keep `AGENTS.md`,
-`CLAUDE.md`, `.claude/`, and `blueprint/`. Keep both adapters if you switch
-between tools.
+You do not have to keep every adapter. For GitHub Copilot-only or Codex-only
+work, keep `AGENTS.md`, `.agents/`, and `blueprint/`. For Claude Code-only work,
+keep `AGENTS.md`, `CLAUDE.md`, `.claude/`, and `blueprint/`. Use `--all` if you
+switch between tools.
 
-Use the native invocation style for your tool:
+Use GitHub Copilot natural-language requests by default, or the native invocation
+style for another adapter:
 
+- GitHub Copilot CLI: ask naturally, for example "run the overview skill."
 - Codex: `$onboard`, `$discovery`, `$doctor`, `$adopt`, `$overview`, `$brief`, `$feature`,
   `$debug`, `$fix`, `$tests`, `$ci`, `$implement`, `$check`, `$try`, `$audit`, `$rollback`, `$complete`,
   `$release`, `$prototype`, `$status`, or plain language like "run the overview."

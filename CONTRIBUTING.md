@@ -2,7 +2,8 @@
 
 AI Blueprint ships workflow files and a dependency-free Node.js installer. The
 repository validation gate requires Node.js 22 or newer and an `npm ci` install
-for the TypeScript maintainer toolchain.
+for the TypeScript maintainer toolchain. GitHub Copilot CLI is the default
+adapter; Codex and Claude Code remain optional adapters.
 
 ## Before you start
 
@@ -22,7 +23,7 @@ framework abstractions do not belong in this repository.
 1. Fork the repository or create a dedicated branch.
 2. Run `npm ci`.
 3. Make the smallest change that solves the documented problem.
-4. Keep matching Codex and Claude Code skill files synchronized.
+4. Keep shared `.agents/skills/` and `.claude/skills/` files synchronized.
 5. Update user-facing documentation when behavior changes.
 6. Run `npm run check`.
 7. Open a pull request using the repository template.
@@ -35,13 +36,13 @@ framework abstractions do not belong in this repository.
 | `npm run check:static` | Check adapter parity, command inventories, imports, references, and package metadata. |
 | `npm test` | Run the installer unit tests. |
 | `npm run test:routing` | Run deterministic skill selection cases without invoking an AI agent. |
-| `npm run test:package` | Pack the npm artifact and smoke-test Codex, Claude, and combined installs. |
+| `npm run test:package` | Pack the scoped npm artifact and smoke-test Copilot, Codex, Claude Code, all-adapter, deprecated-alias, and default installs. |
 | `E2E_ACCEPT_RISK=1 npm run test:e2e` | Run all live-agent behavior scenarios in scratch repositories. |
 
 Run `npm run check` before opening or merging a pull request. The package smoke
 test builds the installer template, packs it into a temporary directory, installs
-that artifact locally, verifies all three adapter modes, and removes its temporary
-files.
+that artifact locally, verifies Copilot-first and explicit adapter modes, and
+removes its temporary files.
 
 ## Workflow changes
 

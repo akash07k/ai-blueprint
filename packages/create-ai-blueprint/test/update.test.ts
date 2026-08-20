@@ -5,9 +5,11 @@ import path from "node:path";
 import test, { type TestContext } from "node:test";
 
 import {
+  getTemplateEntries,
   getGlobalCliInstallCommand,
   isGlobalCliInstallConfirmed,
   parseArgs,
+  resolveAdapter,
   shouldOfferGlobalCliInstall
 } from "../bin/create-ai-blueprint.js";
 import { CONTROL_DIR, MANIFEST_PATH, applyPreparedUpdate, prepareUpdate, readManifest, writeInstallManifest } from "../lib/update.js";
@@ -17,6 +19,7 @@ test("parseArgs supports install and update modes", () => {
   assert.deepEqual(parseArgs(["update", "--dry-run"]), {
     adapter: null,
     command: "update",
+    deprecatedBoth: false,
     dryRun: true,
     force: false,
     help: false,
@@ -28,6 +31,7 @@ test("parseArgs supports install and update modes", () => {
   assert.deepEqual(parseArgs(["status", "--json", "--target", "./app"]), {
     adapter: null,
     command: "status",
+    deprecatedBoth: false,
     dryRun: false,
     force: false,
     help: false,
@@ -47,6 +51,28 @@ test("parseArgs supports install and update modes", () => {
   assert.throws(
     () => parseArgs(["--json"]),
     /--json is available only with the status command/
+  );
+  assert.equal(parseArgs(["--copilot"]).adapter, "copilot");
+  assert.equal(parseArgs(["--all"]).adapter, "all");
+  assert.deepEqual(
+    {
+      adapter: parseArgs(["--both"]).adapter,
+      deprecatedBoth: parseArgs(["--both"]).deprecatedBoth
+    },
+    { adapter: "all", deprecatedBoth: true }
+  );
+});
+
+test("Copilot is the non-interactive and --yes install default", async () => {
+  assert.equal(await resolveAdapter(parseArgs([]), false), "copilot");
+  assert.equal(await resolveAdapter(parseArgs(["--yes"]), true), "copilot");
+  assert.deepEqual(
+    getTemplateEntries("copilot").map((entry) => entry.target),
+    ["AGENTS.md", "blueprint", ".agents"]
+  );
+  assert.deepEqual(
+    getTemplateEntries("all").map((entry) => entry.target),
+    ["AGENTS.md", "blueprint", ".agents", "CLAUDE.md", ".claude"]
   );
 });
 
@@ -111,6 +137,56 @@ test("new installs record only Blueprint-owned managed files", async (t) => {
     await fs.readFile(path.join(targetDir, "blueprint/build-plan.md"), "utf8"),
     "Project roadmap\n"
   );
+});
+
+test("manifest-backed adapters remain authoritative while manifest-less skills infer Codex", async (t) => {
+  const workspace = await createWorkspace(t);
+  const templateRoot = path.join(workspace, "template");
+  const targetDir = path.join(workspace, "target");
+  const files = {
+    "blueprint/README.md": "Blueprint docs\n",
+    ".agents/skills/check/SKILL.md": "Check skill\n",
+    ".claude/skills/check/SKILL.md": "Claude check skill\n"
+  };
+
+  await writeFiles(templateRoot, files);
+  await writeFiles(targetDir, {
+    "blueprint/README.md": files["blueprint/README.md"],
+    ".agents/skills/check/SKILL.md": files[".agents/skills/check/SKILL.md"]
+  });
+
+  const legacy = await prepareUpdate({
+    targetDir,
+    templateRoot,
+    version: "1.0.0"
+  });
+  assert.deepEqual(legacy.adapters, ["codex"]);
+
+  await writeInstallManifest({
+    targetDir,
+    templateRoot,
+    version: "1.0.0",
+    adapter: "codex"
+  });
+  const codex = await prepareUpdate({
+    targetDir,
+    templateRoot,
+    version: "1.1.0"
+  });
+  assert.deepEqual(codex.adapters, ["codex"]);
+
+  await writeInstallManifest({
+    targetDir,
+    templateRoot,
+    version: "1.1.0",
+    adapter: "copilot"
+  });
+  const copilot = await prepareUpdate({
+    targetDir,
+    templateRoot,
+    version: "1.2.0"
+  });
+  assert.deepEqual(copilot.adapters, ["copilot"]);
 });
 
 test("update replaces unchanged managed files and preserves project files", async (t) => {

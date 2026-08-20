@@ -54,6 +54,26 @@ test("readProjectMetadata reports an invalid manifest without hiding project ide
   ]);
 });
 
+test("readProjectMetadata keeps manifest-backed Copilot distinct from legacy Codex", async (t) => {
+  const workspace = await createWorkspace(t);
+  const projectRoot = path.join(workspace, "app");
+
+  await fs.cp(fixtureRoot, projectRoot, { recursive: true });
+  await fs.writeFile(
+    path.join(projectRoot, "blueprint", ".state", "manifest.json"),
+    `${JSON.stringify({
+      schemaVersion: 1,
+      version: "1.0.0",
+      adapters: ["copilot"],
+      managedFiles: {}
+    }, null, 2)}\n`
+  );
+
+  const metadata = await readProjectMetadata(projectRoot);
+
+  assert.deepEqual(metadata.blueprint.adapters, ["copilot"]);
+});
+
 test("readProjectMetadata rejects paths outside a Blueprint project", async (t) => {
   const workspace = await createWorkspace(t);
 

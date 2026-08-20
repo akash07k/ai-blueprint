@@ -88,6 +88,7 @@ async function main(): Promise<void> {
   await validateSkillMetadata(skills);
   await validateCommandInventories(skills);
   await validateVerificationContract();
+  await validateCopilotAdapterContract();
   await validateRepositoryPolish();
   const importCount = await validateClaudeImports();
   const referenceCount = await validateSkillReferences(codexFiles);
@@ -177,7 +178,7 @@ async function validateCommandInventories(skills: readonly string[]): Promise<vo
     fs.readFile(path.join(repoRoot, "AGENTS.md"), "utf8"),
     fs.readFile(path.join(repoRoot, "README.md"), "utf8")
   ]);
-  const coreBlock = agents.match(/Core skills:\r?\n([\s\S]*?)\r?\nIn Codex/);
+  const coreBlock = agents.match(/Core skills:\r?\n([\s\S]*?)\r?\nIn GitHub Copilot/);
 
   if (!coreBlock) {
     throw new Error("Could not find the Core skills inventory in AGENTS.md");
@@ -277,7 +278,68 @@ async function validateVerificationContract(): Promise<void> {
       if (!normalizedContent.includes(normalizedPhrase)) {
         throw new Error(`Verification contract missing from ${relativePath}: ${phrase}`);
       }
+
     }
+  }
+}
+
+async function validateCopilotAdapterContract(): Promise<void> {
+  const contractFiles = new Map([
+    [
+      "AGENTS.md",
+      [
+        "GitHub Copilot CLI is the default",
+        "Never create or manage `.github/copilot-instructions.md`"
+      ]
+    ],
+    [
+      "README.md",
+      [
+        "GitHub Copilot CLI is the default",
+        "does not create or manage `.github/copilot-instructions.md`"
+      ]
+    ],
+    [
+      "packages/create-ai-blueprint/README.md",
+      [
+        "GitHub Copilot CLI is the default",
+        "--copilot",
+        "--all",
+        "deprecated alias"
+      ]
+    ],
+    [
+      "packages/create-ai-blueprint/bin/create-ai-blueprint.ts",
+      [
+        'return "copilot";',
+        "--both is deprecated; use --all instead.",
+        "@akash07k/create-ai-blueprint@latest"
+      ]
+    ],
+    [
+      "packages/create-ai-blueprint/lib/update.ts",
+      ['type Adapter = "codex" | "claude" | "copilot";', "if (manifest) {"]
+    ]
+  ]);
+
+  for (const [relativePath, phrases] of contractFiles) {
+    const content = await fs.readFile(path.join(repoRoot, relativePath), "utf8");
+    const normalizedContent = content.replace(/\s+/g, " ");
+
+    for (const phrase of phrases) {
+      if (!normalizedContent.includes(phrase.replace(/\s+/g, " "))) {
+        throw new Error(`Copilot adapter contract missing from ${relativePath}: ${phrase}`);
+      }
+    }
+  }
+
+  const installer = await fs.readFile(
+    path.join(repoRoot, "packages", "create-ai-blueprint", "bin", "create-ai-blueprint.ts"),
+    "utf8"
+  );
+
+  if (installer.includes("copilot-instructions.md")) {
+    throw new Error("Installer must not manage .github/copilot-instructions.md");
   }
 }
 
@@ -357,6 +419,10 @@ async function validatePackageMetadata(): Promise<void> {
 
   if (bin["create-ai-blueprint"] !== "dist/bin/create-ai-blueprint.js") {
     throw new Error("Package bin entry does not point to the installer CLI");
+  }
+
+  if (bin.blueprint !== "dist/bin/blueprint.js") {
+    throw new Error("Package bin entry does not preserve the status-only blueprint CLI");
   }
 
   for (const requiredFile of requiredFiles) {

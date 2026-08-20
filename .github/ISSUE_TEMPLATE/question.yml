@@ -26,9 +26,10 @@ body:
     attributes:
       label: Adapter
       options:
+        - GitHub Copilot
         - Codex
         - Claude Code
-        - Both adapters
+        - All adapters
         - Other or manual SKILL.md usage
     validations:
       required: true

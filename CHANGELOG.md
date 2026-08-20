@@ -5,6 +5,14 @@ published `@akash07k/create-ai-blueprint` package.
 
 ## Unreleased
 
+### Changed
+
+- Made GitHub Copilot CLI the default installer and workflow adapter. Omitted,
+  `--yes`, and non-interactive installs now add the Copilot-compatible
+  `AGENTS.md`, `.agents/skills/`, and `blueprint/` layout.
+- Added explicit `--copilot` and `--all` installer modes. `--both` remains a
+  warning-emitting deprecated alias for `--all`.
+
 ## [0.9.2] - 2026-08-21
 
 ### Changed

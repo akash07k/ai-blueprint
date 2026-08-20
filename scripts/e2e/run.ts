@@ -10,8 +10,9 @@ const scenariosDir = path.join(__dirname, "scenarios");
 async function main() {
   if (process.env.E2E_ACCEPT_RISK !== "1") {
     console.error(
-      "This harness drives a live agent with --dangerously-skip-permissions in a\n" +
-        "scratch workspace on this machine, and it spends real tokens.\n" +
+      "This harness drives a live agent in a scratch workspace on this machine and\n" +
+        "spends real tokens. By default, GitHub Copilot CLI receives --allow-all,\n" +
+        "which grants all tools, paths, and URLs.\n" +
         "Run it as: E2E_ACCEPT_RISK=1 npm run test:e2e"
     );
     process.exit(1);

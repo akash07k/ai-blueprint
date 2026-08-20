@@ -162,6 +162,27 @@ test("readProjectStatus selects the next build-plan feature when idle", async (t
     branch: "chore/setup"
   });
 
+  test("readProjectStatus reports a manifest-backed Copilot adapter", async (t) => {
+    const projectRoot = await createProject(t, {
+      currentWork: resetCurrentWork(),
+      findings: emptyFindings(),
+      branch: "chore/setup"
+    });
+
+    await fs.writeFile(
+      path.join(projectRoot, "blueprint", ".state", "manifest.json"),
+      `${JSON.stringify({
+        schemaVersion: 1,
+        version: "0.8.0",
+        adapters: ["copilot"],
+        managedFiles: {}
+      }, null, 2)}\n`
+    );
+
+    const status = await readProjectStatus(projectRoot);
+
+    assert.deepEqual(status.blueprint.adapters, ["copilot"]);
+  });
   const status = await readProjectStatus(projectRoot);
 
   assert.equal(status.plans.overview.state, "current");

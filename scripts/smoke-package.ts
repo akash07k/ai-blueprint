@@ -9,7 +9,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "..");
 const packageRoot = path.join(repoRoot, "packages", "create-ai-blueprint");
 
-type Adapter = "codex" | "claude";
+type Adapter = "codex" | "claude" | "copilot";
 
 interface PackageManifest {
   schemaVersion: number;
@@ -19,9 +19,11 @@ interface PackageManifest {
 }
 
 const modes: Record<string, Adapter[]> = {
+  copilot: ["copilot"],
   codex: ["codex"],
   claude: ["claude"],
-  both: ["claude", "codex"]
+  all: ["claude", "codex", "copilot"],
+  both: ["claude", "codex", "copilot"]
 };
 
 function getErrorCode(error: unknown): string | undefined {
@@ -47,7 +49,10 @@ function parseManifest(content: string): PackageManifest {
     typeof manifest.schemaVersion !== "number" ||
     typeof manifest.version !== "string" ||
     !Array.isArray(manifest.adapters) ||
-    !manifest.adapters.every((adapter): adapter is Adapter => adapter === "codex" || adapter === "claude") ||
+    !manifest.adapters.every(
+      (adapter): adapter is Adapter =>
+        adapter === "codex" || adapter === "claude" || adapter === "copilot"
+    ) ||
     typeof manifest.managedFiles !== "object" ||
     manifest.managedFiles === null ||
     Array.isArray(manifest.managedFiles)
@@ -226,6 +231,10 @@ async function main(): Promise<void> {
         throw new Error(`${mode} install did not print the optional CLI command`);
       }
 
+      if (mode === "both" && !installResult.stderr.includes("--both is deprecated")) {
+        throw new Error("Deprecated --both alias did not emit its warning");
+      }
+
       await validateInstall(targetDir, metadata.version, adapters);
 
       const statusResult = runInstalledCommand(
@@ -296,6 +305,20 @@ async function main(): Promise<void> {
       }
     }
 
+    const defaultTarget = path.join(workspace, "target-default");
+    const defaultInstall = run(
+      process.execPath,
+      [binary, "--target", defaultTarget, "--yes"],
+      workspace,
+      true
+    );
+
+    if (!defaultInstall.stdout.includes("Adapters: copilot")) {
+      throw new Error("Default --yes install did not select GitHub Copilot");
+    }
+
+    await validateInstall(defaultTarget, metadata.version, ["copilot"]);
+
     const emptyTarget = await fs.mkdtemp(
       path.join(os.tmpdir(), "ai-blueprint-empty-status-")
     );
@@ -331,7 +354,7 @@ async function main(): Promise<void> {
       await fs.rm(emptyTarget, { recursive: true, force: true });
     }
 
-    console.log("Packed installer passed for codex, claude, and both adapter modes.");
+    console.log("Packed installer passed for Copilot, Codex, Claude Code, all, and deprecated both modes.");
   } finally {
     await fs.rm(workspace, { recursive: true, force: true });
   }
@@ -344,6 +367,7 @@ async function validateInstall(
 ): Promise<void> {
   const expectsCodex = adapters.includes("codex");
   const expectsClaude = adapters.includes("claude");
+  const expectsCopilot = adapters.includes("copilot");
   const expectedPaths = [
     "AGENTS.md",
     "blueprint/README.md",
@@ -354,7 +378,7 @@ async function validateInstall(
     "blueprint/.state/.gitignore"
   ];
 
-  if (expectsCodex) {
+  if (expectsCodex || expectsCopilot) {
     expectedPaths.push(
       ".agents/skills/discovery/SKILL.md",
       ".agents/skills/onboard/SKILL.md",
@@ -377,8 +401,9 @@ async function validateInstall(
 
   await requireMissing(path.join(targetDir, "README.md"));
   await requireMissing(path.join(targetDir, ".ai-blueprint"));
+  await requireMissing(path.join(targetDir, ".github", "copilot-instructions.md"));
 
-  if (!expectsCodex) {
+  if (!expectsCodex && !expectsCopilot) {
     await requireMissing(path.join(targetDir, ".agents"));
   }
 
@@ -410,7 +435,7 @@ async function validateInstall(
 
   const expectedManagedFiles = ["blueprint/README.md"];
 
-  if (expectsCodex) {
+  if (expectsCodex || expectsCopilot) {
     expectedManagedFiles.push(
       ...(await listFiles(path.join(targetDir, ".agents", "skills"))).map(
         (file) => `.agents/skills/${file}`

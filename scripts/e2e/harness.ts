@@ -143,7 +143,11 @@ class Runner {
       "bin",
       "create-ai-blueprint.js"
     );
-    run(process.execPath, [binary, "--target", this.workspace, adapterFlag, "--yes"], this.runDir);
+    run(
+      process.execPath,
+      [binary, "--target", this.workspace, ...(adapterFlag ? [adapterFlag] : []), "--yes"],
+      this.runDir
+    );
   }
 
   gitInit(): void {
@@ -241,7 +245,7 @@ class Runner {
 }
 
 function getAgentName(): AgentName {
-  const configured = process.env.E2E_AGENT || "claude";
+  const configured = process.env.E2E_AGENT || "copilot";
 
   if (configured === "claude" || configured === "copilot") {
     return configured;
@@ -250,8 +254,8 @@ function getAgentName(): AgentName {
   throw new Error(`Unsupported E2E_AGENT: ${configured}. Use "claude" or "copilot".`);
 }
 
-function getDefaultAdapterFlag(): "--both" | "--claude" {
-  return getAgentName() === "copilot" ? "--both" : "--claude";
+function getDefaultAdapterFlag(): "--claude" | undefined {
+  return getAgentName() === "claude" ? "--claude" : undefined;
 }
 
 function ensureAgentAvailable(): void {

@@ -32,9 +32,10 @@ body:
     attributes:
       label: Adapter
       options:
+        - GitHub Copilot
         - Codex
         - Claude Code
-        - Both adapters
+        - All adapters
         - Other or manual SKILL.md usage
     validations:
       required: true
@@ -43,7 +44,7 @@ body:
     attributes:
       label: Environment
       description: Include the operating system, Node.js version, and AI coding tool version.
-      placeholder: Ubuntu 24.04, Node.js 22.17.0, Codex desktop
+      placeholder: Ubuntu 24.04, Node.js 22.17.0, GitHub Copilot CLI
     validations:
       required: true
   - type: textarea

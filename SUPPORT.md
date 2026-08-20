@@ -5,6 +5,10 @@
 The [AI Blueprint documentation](https://github.com/akash07k/ai-blueprint#readme) covers setup,
 updates, commands, file behavior, and troubleshooting.
 
+GitHub Copilot CLI is the default adapter. Include whether you used the default
+install, `--copilot`, `--codex`, `--claude`, `--all`, or the deprecated `--both`
+alias when reporting an installer or updater problem.
+
 ## Ask a usage question
 
 Use the

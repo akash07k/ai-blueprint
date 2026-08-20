@@ -50,12 +50,14 @@ change applies everywhere.
 
 ## Workflow
 
-The loop we use for every feature. The spec for the feature being built lives in
+The loop we use for every feature. GitHub Copilot CLI is the default agent, and
+the spec for the feature being built lives in
 @blueprint/context/current-feature.md.
 
-Run `/feature` (or `/fix` for a bug or change that isn't a planned feature) to
-write the spec, `/implement` to build it on a branch, and `/complete` to log it
-and merge. The numbered loop below is what those skills follow.
+In GitHub Copilot CLI, ask naturally to run `feature` (or `fix` for a bug or
+change that isn't a planned feature), `implement`, and `complete`. Other
+adapters can use the slash commands shown below. The numbered loop is the same
+for every adapter.
 
 The skills are the structured path, not a requirement. You can also just describe
 a feature, fix, or change in chat at any time and we'll build it the same way; the

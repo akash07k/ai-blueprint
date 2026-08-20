@@ -10,11 +10,15 @@ there is a single source of truth.
 A description of your project and the problem it solves.
 
 This project is built with the **AI Blueprint**, a workflow layer, not an
-app skeleton. To start a new project, scaffold the app first in an empty folder
-(create-next-app, Vite, etc.), then overlay these files on top. Never run a
-framework scaffolder inside a directory that already holds the blueprint files
-(`AGENTS.md`, `CLAUDE.md`, `.agents/`, `.claude/`, `blueprint/`); it fails
-because the directory isn't empty.
+app skeleton. GitHub Copilot CLI is the default agent. To start a new project,
+scaffold the app first in an empty folder (create-next-app, Vite, etc.), then
+overlay these files on top. Never run a framework scaffolder inside a directory
+that already holds the blueprint files (`AGENTS.md`, `CLAUDE.md`, `.agents/`,
+`.claude/`, `blueprint/`); it fails because the directory isn't empty.
+
+GitHub Copilot reads `AGENTS.md` and `.agents/skills/`. Never create or manage
+`.github/copilot-instructions.md`; it is intentionally outside the Blueprint
+installer's managed paths.
 
 New here? `README.md` explains the whole workflow.
 
@@ -28,15 +32,16 @@ New here? `README.md` explains the whole workflow.
 ## Workflow
 
 Build one feature, fix, or rollback at a time, behind review gates. Each step's instructions
-are plain markdown skills any capable agent can read and follow. The workflow is
-exposed through tool-specific adapters:
+are plain markdown skills any capable agent can read and follow. The workflow is exposed through tool-specific adapters:
 
+- GitHub Copilot CLI: `AGENTS.md` plus `.agents/skills/<skill>/SKILL.md`
 - Codex: `.agents/skills/<skill>/SKILL.md`
 - Claude Code: `.claude/skills/<skill>/SKILL.md`
 
-Unused adapters can be removed. Codex-only projects can delete `CLAUDE.md` and
-`.claude/`. Claude Code-only projects can delete `.agents/`, but should keep
-`AGENTS.md` because `CLAUDE.md` imports it.
+Copilot-only installs contain `AGENTS.md`, `.agents/`, and `blueprint/`.
+Codex uses the same `.agents/` adapter explicitly. Claude Code-only projects
+can delete `.agents/`, but should keep `AGENTS.md` because `CLAUDE.md` imports
+it.
 
 When changing shared workflow behavior, update the matching skill in both
 adapter folders so Codex and Claude Code stay aligned.
@@ -64,13 +69,14 @@ Core skills:
 - `prototype` - optional, pre-build static mockups to lock the look
 - `status` - read-only progress summary, workflow drift warning, and suggested next action
 
-In Codex, invoke these as skills (`$onboard`, `$discovery`, `$overview`, `$feature`,
-`$implement`, and so on) or ask naturally, such as "run the overview." In Claude
-Code, use the slash commands (`/onboard`, `/discovery`, `/overview`, `/feature`,
-and so on). In tools without native skills, follow the matching `SKILL.md`
-manually. The conventions in `blueprint/context/` apply however a step is
-invoked. `/discovery` is never required: users may write detailed plans directly
-or develop them through any conversation before running `/overview`.
+In GitHub Copilot CLI, ask naturally, such as "run the overview." In Codex,
+invoke skills (`$onboard`, `$discovery`, `$overview`, `$feature`, `$implement`,
+and so on) or ask naturally. In Claude Code, use slash commands (`/onboard`,
+`/discovery`, `/overview`, `/feature`, and so on). In tools without native
+skills, follow the matching `SKILL.md` manually. The conventions in
+`blueprint/context/` apply however a step is invoked. `/discovery` is never
+required: users may write detailed plans directly or develop them through any
+conversation before running `/overview`.
 
 Optional explicit-only skill: `autopilot` can run one bounded spec/build/check
 and targeted-audit pass when directly invoked. It may create checkpoint commits

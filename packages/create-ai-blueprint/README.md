@@ -23,17 +23,17 @@ You can also use npm's initializer form:
 npm create @akash07k/ai-blueprint@latest
 ```
 
-The installer copies the Blueprint workflow files into the current directory:
+GitHub Copilot CLI is the default installer and workflow adapter. Omitted,
+`--yes`, and non-interactive installs copy these files into the current directory:
 
 - `AGENTS.md`
-- `CLAUDE.md`
 - `blueprint/.state/manifest.json`
 - `.agents/`
-- `.claude/`
 - `blueprint/`
 
 It keeps the app's root `README.md` alone and installs the Blueprint workflow
-docs at `blueprint/README.md`.
+docs at `blueprint/README.md`. It does not create or manage
+`.github/copilot-instructions.md`.
 
 The installed workflow includes optional Render and Vercel deployment readiness
 through `/release` or `$release`; it prepares local config and checks, but does
@@ -57,6 +57,7 @@ restart Claude Code in that folder so the newly added project skills appear.
 
 | Tool | Installed adapter | Invocation |
 | --- | --- | --- |
+| GitHub Copilot CLI | `AGENTS.md` and `.agents/skills/` | Ask naturally, for example "run the feature skill" |
 | Codex | `.agents/skills/` | `$feature`, `$implement`, or plain language |
 | Claude Code | `.claude/skills/` | `/feature`, `/implement`, and other slash commands |
 | Other tools | `AGENTS.md` plus readable skill files | Ask the agent to follow the matching `SKILL.md` |
@@ -64,14 +65,18 @@ restart Claude Code in that folder so the newly added project skills appear.
 ## Options
 
 ```bash
+npx @akash07k/create-ai-blueprint@latest -- --copilot
 npx @akash07k/create-ai-blueprint@latest -- --codex
 npx @akash07k/create-ai-blueprint@latest -- --claude
+npx @akash07k/create-ai-blueprint@latest -- --all
 npx @akash07k/create-ai-blueprint@latest -- --both
 npx @akash07k/create-ai-blueprint@latest -- --force
 npx @akash07k/create-ai-blueprint@latest -- --target ./my-app
 ```
 
 The same flags work with `npm create @akash07k/ai-blueprint@latest -- ...`.
+`--all` installs every adapter. `--both` is a warning-emitting deprecated alias
+for `--all`.
 
 Use `--force` to overwrite existing Blueprint files. Without `--force`, the
 installer asks before overwriting in an interactive terminal and exits in
@@ -91,7 +96,10 @@ Apply the update:
 npx @akash07k/create-ai-blueprint@latest update
 ```
 
-The updater detects the installed adapters and manages only these paths:
+The updater reads the installed manifest as the authoritative adapter record.
+Manifest-backed Codex and Claude Code installs retain exactly those adapters.
+Manifest-less `.agents/skills/` installations use legacy Codex inference. The
+updater manages only these paths:
 
 - `.agents/skills/`
 - `.claude/skills/`
