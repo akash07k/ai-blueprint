@@ -24,10 +24,12 @@ You can also use npm's initializer form:
 npm create ai-blueprint@latest
 ```
 
-The installer copies the Blueprint workflow files into the current directory:
+Depending on the selected adapter mode, the installer copies these Blueprint
+workflow files into the current directory:
 
 - `AGENTS.md`
 - `CLAUDE.md`
+- `.github/copilot-instructions.md`
 - `blueprint/.state/manifest.json`
 - `.agents/`
 - `.claude/`
@@ -60,19 +62,24 @@ restart Claude Code in that folder so the newly added project skills appear.
 | --- | --- | --- |
 | Codex | `.agents/skills/` | `$feature`, `$implement`, or plain language |
 | Claude Code | `.claude/skills/` | `/feature`, `/implement`, and other slash commands |
-| Other tools | `AGENTS.md` plus readable skill files | Ask the agent to follow the matching `SKILL.md` |
+| GitHub Copilot | `.github/copilot-instructions.md` plus `.agents/skills/` | Ask Copilot to run a Blueprint skill |
+| Other AGENTS.md-aware tools | `AGENTS.md` plus `blueprint/` | Ask the agent to follow the Blueprint workflow |
 
 ## Options
 
 ```bash
 npx create-ai-blueprint@latest -- --codex
 npx create-ai-blueprint@latest -- --claude
-npx create-ai-blueprint@latest -- --both
+npx create-ai-blueprint@latest -- --copilot
+npx create-ai-blueprint@latest -- --universal
+npx create-ai-blueprint@latest -- --all
 npx create-ai-blueprint@latest -- --force
 npx create-ai-blueprint@latest -- --target ./my-app
 ```
 
 The same flags work with `npm create ai-blueprint@latest -- ...`.
+
+Interactive and non-interactive installs default to `--all`.
 
 Use `--force` to overwrite existing Blueprint files. Without `--force`, the
 installer asks before overwriting in an interactive terminal and exits in
@@ -96,6 +103,7 @@ The updater detects the installed adapters and manages only these paths:
 
 - `.agents/skills/`
 - `.claude/skills/`
+- `.github/copilot-instructions.md`
 - `blueprint/README.md`
 
 It preserves `AGENTS.md`, `CLAUDE.md`, project and build plans, context, history,

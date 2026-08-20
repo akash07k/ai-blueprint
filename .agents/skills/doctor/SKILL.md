@@ -49,16 +49,21 @@ Gather these, then summarize. Do not dump file contents.
      the files to exist on disk. Ignored but present is healthy; ignored and
      missing means the local workflow needs to be restored.
 2. **Tool adapters**
-   - Confirm at least one adapter exists: `.agents/skills/` for Codex or
-     `.claude/skills/` for Claude Code.
-   - If both adapters are present, say that is healthy when both tools are used.
-   - If both adapters are present, compare their skill folder names. Warn about
-     missing skills on either side.
+   - Confirm the universal workflow files exist: `AGENTS.md` and `blueprint/`.
+     Native adapters are optional.
+   - Treat `.agents/skills/` as the shared native skills for Codex and GitHub
+     Copilot, `.claude/skills/` as the Claude Code adapter, and
+     `.github/copilot-instructions.md` as the GitHub Copilot entry file.
+   - If `.github/copilot-instructions.md` is present without `.agents/skills/`,
+     warn that the Copilot skill files are missing.
+   - If both `.agents/skills/` and `.claude/skills/` are present, say that is
+     healthy when both tools are used. Compare their skill folder names and warn
+     about missing skills on either side.
    - If git shows changes under `.agents/skills/` or `.claude/skills/`, check
      the matching adapter file too. Warn when workflow behavior was updated in
      one adapter but not the other.
-   - If only one tool is used, mention the unused adapter can be deleted. Do not
-     treat extra adapters as an error.
+   - If only one tool is used, mention unused native adapter files can be
+     deleted. Do not treat extra adapters as an error.
    - If `CLAUDE.md` exists and still starts with `# Project Name`, flag that
      `/onboard` probably has not finished.
 3. **Commands and project setup**
@@ -153,8 +158,10 @@ Choose the repair order in this priority:
 - Required Blueprint files missing -> overlay the Blueprint again, or use
   `/adopt` for a brownfield app.
 - No git repo -> initialize git before using the build loop.
-- No tool adapter -> restore `.agents/skills/` or `.claude/skills/` for the tool
-  being used.
+- Universal workflow files missing -> restore `AGENTS.md` and `blueprint/`.
+- A selected native adapter is missing -> restore `.agents/skills/` for Codex or
+  Copilot, `.claude/skills/` for Claude Code, or
+  `.github/copilot-instructions.md` for Copilot.
 - Onboarding incomplete -> run `/onboard`.
 - Root README is still the Blueprint workflow doc -> run `/onboard` or move it
   to `blueprint/README.md` before publishing.

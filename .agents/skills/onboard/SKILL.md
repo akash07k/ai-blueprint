@@ -158,7 +158,8 @@ Blueprint visibility?
    Portable. Best for teams and working across machines.
 
 2. Keep Blueprint workflow files local
-   Adds .agents/, .claude/, blueprint/, and CLAUDE.md to .gitignore.
+   Adds .agents/, .claude/, .github/copilot-instructions.md, blueprint/, and
+   CLAUDE.md to .gitignore.
    Keeps AGENTS.md public as the lightweight project agent guide.
 ```
 
@@ -170,6 +171,7 @@ Recommend option 1 by default. If the user chooses option 2:
   # AI Blueprint local workflow files
   .agents/
   .claude/
+  .github/copilot-instructions.md
   blueprint/
   CLAUDE.md
   ```
@@ -185,11 +187,12 @@ Recommend option 1 by default. If the user chooses option 2:
 - Explain that Blueprint state, specs, findings, and history will not travel
   with the repo; another machine needs the Blueprint reinstalled or restored
   locally.
-- If any of `.agents/`, `.claude/`, `blueprint/`, or
-  `CLAUDE.md` are already tracked, say `.gitignore` will not hide tracked files.
-  Ask before running
-  `git rm --cached -r .agents .claude blueprint CLAUDE.md`, and
-  only run it if the user explicitly approves. Never delete the local files.
+- If any of `.agents/`, `.claude/`, `.github/copilot-instructions.md`,
+  `blueprint/`, or `CLAUDE.md` are already tracked, say `.gitignore` will not
+  hide tracked files. Ask before running
+  `git rm --cached -r .agents .claude blueprint CLAUDE.md` and
+  `git rm --cached .github/copilot-instructions.md`, and only run either command
+  if the user explicitly approves. Never delete the local files.
 
 Then report which adapter folders are needed:
 
@@ -197,7 +200,11 @@ Then report which adapter folders are needed:
   `.claude/` can be deleted.
 - Claude Code only: keep `AGENTS.md`, `CLAUDE.md`, `.claude/`, and `blueprint/`;
   `.agents/` can be deleted.
-- Mixed tools: keep both adapters.
+- GitHub Copilot only: keep `AGENTS.md`, `.agents/`,
+  `.github/copilot-instructions.md`, and `blueprint/`; `CLAUDE.md` and
+  `.claude/` can be deleted.
+- Other AGENTS.md-aware tools: keep `AGENTS.md` and `blueprint/`.
+- Mixed tools: keep every adapter required by the selected tools.
 
 Do not delete adapters unless the user explicitly asks.
 

@@ -21,6 +21,7 @@ const requiredPaths = [
   ".github/ISSUE_TEMPLATE/feature_request.yml",
   ".github/ISSUE_TEMPLATE/question.yml",
   ".github/PULL_REQUEST_TEMPLATE.md",
+  ".github/copilot-instructions.md",
   ".github/release.yml",
   ".github/workflows/publish.yml",
   ".github/workflows/validate.yml",

@@ -5,6 +5,11 @@ published `create-ai-blueprint` package.
 
 ## Unreleased
 
+### Added
+
+- Added universal and GitHub Copilot installer modes, including Copilot
+  instructions, managed updates, and package smoke coverage.
+
 ## [0.8.0] - 2026-08-19
 
 ### Changed

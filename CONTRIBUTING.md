@@ -35,12 +35,12 @@ framework abstractions do not belong in this repository.
 | `npm run check:static` | Check adapter parity, command inventories, imports, references, and package metadata. |
 | `npm test` | Run the installer unit tests. |
 | `npm run test:routing` | Run deterministic skill selection cases without invoking an AI agent. |
-| `npm run test:package` | Pack the npm artifact and smoke-test Codex, Claude, and combined installs. |
+| `npm run test:package` | Pack the npm artifact and smoke-test every installer adapter mode. |
 | `E2E_ACCEPT_RISK=1 npm run test:e2e` | Run all live-agent behavior scenarios in scratch repositories. |
 
 Run `npm run check` before opening or merging a pull request. The package smoke
 test builds the installer template, packs it into a temporary directory, installs
-that artifact locally, verifies all three adapter modes, and removes its temporary
+that artifact locally, verifies every adapter mode, and removes its temporary
 files.
 
 ## Workflow changes
