@@ -22,22 +22,22 @@ request or in an installer template.
    The authoritative upstream baseline. Treat it as read-only. Fetch changes
    from it, but never push directly to it.
 
-2. `fork/main`
+2. `main` and `origin/main`
 
-   The clean private integration branch. It contains the current upstream
-   baseline plus the small, ordered set of changes this fork keeps regardless
-   of whether upstream accepts them. It never contains an upstream pull request
-   that is still under review.
+   The clean private integration branch and its private remote counterpart. They
+   contain the current upstream baseline plus the small, ordered set of changes
+   this fork keeps regardless of whether upstream accepts them. `main` never
+   contains an upstream pull request that is still under review.
 
 3. `fork/with-<topic>`
 
-   A temporary local integration overlay. It starts at `fork/main`, then
+   A temporary local integration overlay. It starts at `main`, then
    replays a pending upstream pull request that private work needs before that
    pull request is resolved. It is not the pull request source branch.
 
 4. `personal/<topic>`
 
-   A private feature branch based on `fork/main`, or on a documented
+   A private feature branch based on `main`, or on a documented
    `fork/with-<topic>` overlay when it needs pending upstream work.
 
 5. `contrib/<topic>`
@@ -45,7 +45,7 @@ request or in an installer template.
    An upstream contribution branch based directly on `upstream/main`. It must
    contain only commits that are appropriate to propose upstream.
 
-Do not use `fork/main` or `fork/with-<topic>` as the source of an upstream pull
+Do not use `main` or `fork/with-<topic>` as the source of an upstream pull
 request. Do not assume `origin/main` is an exact mirror of upstream. The
 canonical upstream reference is always `upstream/main`.
 
@@ -100,11 +100,13 @@ Use this workflow after creating a personal fork and adding the canonical
 project as `upstream`.
 
 ```powershell
+Invoke-Git fetch origin --prune
 Invoke-Git fetch upstream --prune
 Invoke-Git remote set-url --push upstream DISABLED
 Invoke-Git config rerere.enabled true
-Invoke-Git switch -c fork/main upstream/main
-Invoke-Git push -u origin fork/main
+Invoke-Git switch main
+Invoke-Git rebase upstream/main
+Invoke-Git push --force-with-lease origin main
 ```
 
 In another clone, switch deliberately to the private integration branch instead
@@ -112,7 +114,7 @@ of the fork's default branch:
 
 ```powershell
 Invoke-Git fetch origin --prune
-Invoke-Git switch --track origin/fork/main
+Invoke-Git switch --track origin/main
 ```
 
 If an upstream pull request is already open and private work needs it before it
@@ -121,7 +123,7 @@ branch:
 
 ```powershell
 Invoke-Git tag -a fork/pending-topic-base origin/contrib/pending-topic -m "Pin pending upstream pull request source"
-Invoke-Git switch -c fork/with-pending-topic fork/main
+Invoke-Git switch -c fork/with-pending-topic main
 Invoke-Git cherry-pick -x "upstream/main..origin/contrib/pending-topic"
 ```
 
@@ -139,10 +141,10 @@ Invoke-Git push -u origin fork/with-pending-topic
 
 ## Adding a Private Change
 
-Create a focused private branch from `fork/main` by default:
+Create a focused private branch from `main` by default:
 
 ```powershell
-Invoke-Git switch fork/main
+Invoke-Git switch main
 Invoke-Git switch -c personal/scoped-package
 ```
 
@@ -166,34 +168,34 @@ test(fork): exercise the scoped package
 ```
 
 After review, integrate the branch into the base it began from. This example
-uses `fork/main`:
+uses `main`:
 
 ```powershell
 Invoke-Git switch personal/scoped-package
-Invoke-Git rebase fork/main
-Invoke-Git switch fork/main
+Invoke-Git rebase main
+Invoke-Git switch main
 Invoke-Git merge --ff-only personal/scoped-package
-Invoke-Git push origin fork/main
+Invoke-Git push origin main
 ```
 
 Small, isolated commits make rebases easier and let an upstream-worthy commit
 be promoted later without dragging along unrelated private work.
 
-If `fork/main` was rewritten by an upstream rebase while the personal branch
+If `main` was rewritten by an upstream rebase while the personal branch
 was active, use the migration procedure below instead of the ordinary rebase.
 
-## Extracting a Pending Pull Request from an Existing fork/main
+## Extracting a Pending Pull Request from an Existing Private Baseline
 
-Use this one-time procedure only when an existing `fork/main` was started from
+Use this one-time procedure only when an existing `main` was started from
 a pending pull request and all private commits are descendants of that pull
 request's pinned source tag. Commit or otherwise remove working-tree changes
 before starting.
 
 ```powershell
-Invoke-Git branch backup/fork-main-before-pending-extraction fork/main
-Invoke-Git switch fork/main
+Invoke-Git branch backup/main-before-pending-extraction main
+Invoke-Git switch main
 Invoke-Git rebase --onto upstream/main fork/pending-topic-base
-Invoke-Git switch -c fork/with-pending-topic fork/main
+Invoke-Git switch -c fork/with-pending-topic main
 Invoke-Git cherry-pick -x "upstream/main..fork/pending-topic-base"
 ```
 
@@ -209,9 +211,9 @@ Before rebasing, ensure the private integration branch is clean:
 ```powershell
 Invoke-Git status
 Invoke-Git fetch upstream --prune
-Invoke-Git switch fork/main
+Invoke-Git switch main
 $stamp = Get-Date -Format "yyyy-MM-dd-HHmmss"
-$backupBranch = "backup/fork-main-before-sync-$stamp"
+$backupBranch = "backup/main-before-sync-$stamp"
 Invoke-Git branch $backupBranch
 Invoke-Git rebase upstream/main
 ```
@@ -219,46 +221,46 @@ Invoke-Git rebase upstream/main
 If the rebase succeeds, update the private remote branch:
 
 ```powershell
-Invoke-Git push --force-with-lease origin fork/main
+Invoke-Git push --force-with-lease origin main
 ```
 
 Rebasing rewrites the private commit IDs. `--force-with-lease` protects against
 overwriting a remote update that is not present locally.
 
 Keep the dated backup branch until every active `personal/*` branch has been
-migrated onto the rewritten `fork/main`.
+migrated onto the rewritten `main`.
 
 ## Refreshing a Pending Integration Overlay
 
-After rebasing `fork/main`, refresh each overlay that still needs its pending
+After rebasing `main`, refresh each overlay that still needs its pending
 pull request. The backup branch from the prior section identifies the overlay's
 old base:
 
 ```powershell
-$forkMainBackup = "backup/fork-main-before-sync-YYYY-MM-DD-HHMMSS"
-$oldOverlayBase = Invoke-Git merge-base fork/with-pending-topic $forkMainBackup
+$mainBackup = "backup/main-before-sync-YYYY-MM-DD-HHMMSS"
+$oldOverlayBase = Invoke-Git merge-base fork/with-pending-topic $mainBackup
 $overlayBackup = "backup/fork-with-pending-topic-before-sync"
 Invoke-Git branch $overlayBackup fork/with-pending-topic
 Invoke-Git switch fork/with-pending-topic
-Invoke-Git rebase --onto fork/main $oldOverlayBase
-Invoke-Git switch fork/main
+Invoke-Git rebase --onto main $oldOverlayBase
+Invoke-Git switch main
 ```
 
 This replays only the overlay's copied pull request commits onto the rewritten
-`fork/main`. It does not alter the upstream pull request source branch. Migrate
+`main`. It does not alter the upstream pull request source branch. Migrate
 any personal branches based on the overlay using the next procedure.
 
 ## Migrating Dependent Branches After a Base Rebase
 
-A rewritten `fork/main` or `fork/with-<topic>` changes commit IDs. Each active
+A rewritten `main` or `fork/with-<topic>` changes commit IDs. Each active
 `personal/*` branch based on that branch must be moved before it can
 fast-forward back into its intended base.
 
 For each active personal branch, use a backup branch for its former base:
 
 ```powershell
-$newBase = "fork/main"
-$backupBase = "backup/fork-main-before-sync-YYYY-MM-DD-HHMMSS"
+$newBase = "main"
+$backupBase = "backup/main-before-sync-YYYY-MM-DD-HHMMSS"
 $oldBase = Invoke-Git merge-base personal/scoped-package $backupBase
 Invoke-Git switch personal/scoped-package
 Invoke-Git rebase --onto $newBase $oldBase
@@ -313,7 +315,7 @@ The `-x` records the original private commit in the new commit message. The
 resulting pull request contains no fork-only publishing, branding, or policy
 commits.
 
-Never branch `contrib/<topic>` from `fork/main`. That would make the upstream
+Never branch `contrib/<topic>` from `main`. That would make the upstream
 pull request include the private patch stack.
 
 Before opening an upstream pull request, run this preflight from the
@@ -325,7 +327,7 @@ if ($branch -notmatch '^contrib/') {
   throw "Create upstream pull requests only from a contrib/<topic> branch."
 }
 
-$integrationBranches = @("fork/main")
+$integrationBranches = @("main")
 $integrationBranches += Invoke-Git for-each-ref --format="%(refname:short)" "refs/heads/fork/with-*"
 $integrationBranches = $integrationBranches | Where-Object { $_ }
 
@@ -357,33 +359,33 @@ When private work needs a pending upstream pull request:
 2. Keep the immutable `fork/pending-topic-base` tag at the exact source tip.
 3. Use `fork/with-pending-topic` only as a local copy of that pull request.
 4. Base only dependent private work on the overlay.
-5. Continue ordinary upstream rebases on `fork/main`.
+5. Continue ordinary upstream rebases on `main`.
 6. Do not open an upstream pull request from the overlay.
 
 After the pull request is merged, first confirm that `upstream/main` contains
-the intended behavior. Rebase `fork/main` normally onto `upstream/main`. Then
+the intended behavior. Rebase `main` normally onto `upstream/main`. Then
 migrate every private branch that depends on the overlay:
 
 ```powershell
 $overlayBackup = "backup/fork-with-pending-topic-before-resolution"
 Invoke-Git branch $overlayBackup fork/with-pending-topic
-$newBase = "fork/main"
+$newBase = "main"
 $oldBase = Invoke-Git merge-base personal/uses-pending-topic $overlayBackup
 Invoke-Git switch personal/uses-pending-topic
 Invoke-Git rebase --onto $newBase $oldBase
 ```
 
 This drops the overlay's copied pull request commits and replays only the
-private descendants onto the equivalent behavior now in `fork/main`. Keep the
+private descendants onto the equivalent behavior now in `main`. Keep the
 overlay backup until every dependent branch has been migrated and verified.
 
 If the upstream pull request closes without merging, decide whether the work
 remains valuable to the fork.
 
-1. Keep the work: retain the overlay and refresh it after future `fork/main`
+1. Keep the work: retain the overlay and refresh it after future `main`
    rebases.
 2. Drop the work: migrate only private branches that no longer need its code
-   onto `fork/main`. Resolve or keep branches that still depend on it.
+   onto `main`. Resolve or keep branches that still depend on it.
 3. Partially merged or materially changed work: stop and decide which behavior
    remains valuable before rebasing any dependent branch.
 
@@ -400,19 +402,16 @@ This gives each change a stable purpose, review history, and conflict context.
 This fork currently uses the following mapping:
 
 1. `feat/universal-copilot-adapters` is the source branch for upstream PR #4.
-2. `fork/main` is based on `upstream/main` and retains only this fork's private
+2. `main` is based on `upstream/main` and retains only this fork's private
    documentation and later private commits.
-3. `fork/with-pr4` is a local overlay that replays PR #4's commits on top of
-   `fork/main` for local
-   use while the upstream review remains open.
+3. `fork/with-pr4` is a frozen historical local overlay that replayed PR #4's
+   commits on top of `main`. It is not a development base.
 4. `fork/pending-pr4-base` records PR #4's source tip `7bf1f4e`.
 5. The source branch for PR #4 remains unchanged.
-6. The scoped package publishing patch exists as commit `2a7e2a4` on an older
-   feature branch. It is fork-only but is not yet part of `fork/main`; import it
-   later through a new `personal/scoped-package` branch.
-7. The accessible agent output guidance patch exists as commit `9401cf3` on
-   `feature/universal-copilot-adapters`. It is not part of `fork/main`; promote
-   it later by cherry-picking it onto an isolated `contrib/` branch.
+6. `main` includes the fork-only scoped package publishing release (`24eeaa3`),
+   accessible output guidance (`8c651c8`), Copilot-first default (`9e54a73`),
+   complete and rollback safeguards (`9501ccc`), and CI status-test fix
+   (`97b7522`). These private changes are not part of upstream PR #4.
 
 When reusing this playbook in another project, replace the branch names and
 project-specific examples, but retain the branch separation and rebase rules.
