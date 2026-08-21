@@ -6,6 +6,27 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "..");
 const codexSkillsRoot = path.join(repoRoot, ".agents", "skills");
 const claudeSkillsRoot = path.join(repoRoot, ".claude", "skills");
+const currentFeatureStub = `# Current Feature
+
+> **Generated file.** Holds the one feature, fix, or rollback being built right now. Run
+> \`/feature <number-or-name>\` to spec a build-plan feature, or \`/fix "<bug>"\` for
+> an ad-hoc fix. Use \`/rollback <completed-feature>\` to plan a safe reversal.
+> Build one thing at a time; \`/complete\` archives it under
+> \`blueprint/history/\` and resets this file.
+
+_Nothing in progress. Run \`/feature\`, \`/fix\`, or \`/rollback\` to start._
+`;
+const findingsStub = `# Findings
+
+> **Generated file.** The findings ledger: review findings raised by \`/audit\`
+> against the work in progress, each with a durable ID, severity (P0-P3), and
+> status. \`/implement\` marks repaired findings \`fixed\`, a later \`/audit\` pass
+> moves them to \`closed\`, and \`/complete\` refuses to merge while any P0 or P1
+> finding is \`open\` or \`fixed\`, then archives resolved findings with the work
+> and resets this file.
+
+_No findings recorded. \`/audit\` appends findings here when it finds them._
+`;
 const requiredPaths = [
   "AGENTS.md",
   "CLAUDE.md",
@@ -89,6 +110,7 @@ async function main(): Promise<void> {
   await validateCommandInventories(skills);
   await validateVerificationContract();
   await validateCopilotAdapterContract();
+  await validateCanonicalStubs();
   await validateRepositoryPolish();
   const importCount = await validateClaudeImports();
   const referenceCount = await validateSkillReferences(codexFiles);
@@ -238,11 +260,41 @@ async function validateVerificationContract(): Promise<void> {
     ],
     [
       ".agents/skills/implement/SKILL.md",
-      ["declares a `Verify` command, run that exact", "fallback build and tests"]
+      [
+        "declares a `Verify` command, run that exact",
+        "fallback build and tests",
+        "both values match `^[0-9a-f]{40}$`",
+        "verify it has exactly one parent",
+        "Stop on a merge target",
+        "resolved parent exactly equals `Target parent`",
+        "Use only the resolved full SHA values"
+      ]
     ],
     [
       ".agents/skills/complete/SKILL.md",
-      ["exact `Verify` command from `AGENTS.md`", "fallback build and tests"]
+      [
+        "exact `Verify` command from `AGENTS.md`",
+        "fallback build and tests",
+        "Keep every unresolved entry in the ledger",
+        "A `fixed` entry is not resolved at any severity",
+        "must remain verbatim for a later `/audit` re-review",
+        "replace `blueprint/context/current-feature.md` with the canonical stub below"
+      ]
+    ],
+    [
+      ".agents/skills/rollback/SKILL.md",
+      [
+        "target commit and parent commit as full 40-character SHA values",
+        "name the merge target as an implementation blocker",
+        "`/implement` stops before applying a merge target"
+      ]
+    ],
+    [
+      ".agents/skills/rollback/reference/rollback-spec-template.md",
+      [
+        "**Target commit:** `<full 40-character commit SHA>`",
+        "**Target parent:** `<full 40-character parent SHA>`"
+      ]
     ],
     [
       ".agents/skills/doctor/SKILL.md",
@@ -341,6 +393,37 @@ async function validateCopilotAdapterContract(): Promise<void> {
   if (installer.includes("copilot-instructions.md")) {
     throw new Error("Installer must not manage .github/copilot-instructions.md");
   }
+}
+
+async function validateCanonicalStubs(): Promise<void> {
+  const [currentFeature, findings, completeSkill] = await Promise.all([
+    fs.readFile(path.join(repoRoot, "blueprint/context/current-feature.md"), "utf8"),
+    fs.readFile(path.join(repoRoot, "blueprint/context/findings.md"), "utf8"),
+    fs.readFile(path.join(codexSkillsRoot, "complete", "SKILL.md"), "utf8")
+  ]);
+
+  if (currentFeature !== currentFeatureStub) {
+    throw new Error("Current feature stub must exactly match the canonical content and final newline");
+  }
+
+  if (findings !== findingsStub) {
+    throw new Error("Findings stub must exactly match the canonical content and final newline");
+  }
+
+  if (!completeSkill.includes(indentMarkdownBlock(currentFeatureStub))) {
+    throw new Error("Complete skill must embed the canonical current feature stub");
+  }
+
+  if (!completeSkill.includes(indentMarkdownBlock(findingsStub))) {
+    throw new Error("Complete skill must embed the canonical findings stub");
+  }
+}
+
+function indentMarkdownBlock(content: string): string {
+  return content
+    .split("\n")
+    .map((line) => (line ? `    ${line}` : ""))
+    .join("\n");
 }
 
 async function validateClaudeImports(): Promise<number> {

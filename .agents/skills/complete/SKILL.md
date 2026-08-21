@@ -80,9 +80,15 @@ entries keep their recorded reason). Prefix each ID with the archive name for
 global uniqueness: feature 12's `F-03` becomes `12/F-03`; fixes and rollbacks
 use their archive filename as the prefix. An entry carried forward from earlier
 work archives with the item that resolved it; its **Found** line preserves
-where it came from. Then remove the archived entries from the ledger. Unresolved entries (`open` or `fixed` P2/P3, and `unverified`
-leads) stay in the ledger with their IDs so they are never silently dropped.
-When nothing remains, reset the ledger to exactly this stub, and create it the
+where it came from. Only `closed`, `accepted`, and `invalid` entries are
+resolved for archival. A `fixed` entry is not resolved at any severity: never
+append it to the archive or remove it from the live ledger.
+
+Then remove only the archived entries from the ledger. Entries with `open`,
+`fixed`, or `unverified` status stay in the ledger with their IDs so they are
+never silently dropped. A fixed P2/P3 finding does not block completion, but it
+must remain verbatim for a later `/audit` re-review. When no `open`, `fixed`, or
+`unverified` entries remain, reset the ledger to exactly this stub, and create it the
 same way if the file is missing (an older install):
 
     # Findings
@@ -96,10 +102,28 @@ same way if the file is missing (an older install):
 
     _No findings recorded. `/audit` appends findings here when it finds them._
 
-Then reset `blueprint/context/current-feature.md` to its current stub ("nothing
-in progress"), including `/rollback` alongside `/feature` and `/fix`. Don't
-commit yet; the next step makes one work commit covering the code and these doc
-changes. The archive is the build history.
+Keep every unresolved entry in the ledger. Do not replace it with the empty stub
+while it still contains any open, fixed, or unverified finding. After archiving
+resolved findings, replace `blueprint/context/current-feature.md` with
+the canonical stub below. Do not paraphrase it or substitute an abbreviated "no
+work" stub. Before committing, read the file and confirm it exactly matches:
+
+    # Current Feature
+
+    > **Generated file.** Holds the one feature, fix, or rollback being built right now. Run
+    > `/feature <number-or-name>` to spec a build-plan feature, or `/fix "<bug>"` for
+    > an ad-hoc fix. Use `/rollback <completed-feature>` to plan a safe reversal.
+    > Build one thing at a time; `/complete` archives it under
+    > `blueprint/history/` and resets this file.
+
+    _Nothing in progress. Run `/feature`, `/fix`, or `/rollback` to start._
+
+When no open, fixed, or unverified ledger entries remain, confirm
+`blueprint/context/findings.md` exactly matches the canonical Findings stub
+above. Otherwise, preserve the remaining entries without rewriting them.
+
+Don't commit yet; the next step makes one work commit covering the code and these
+documentation changes. The archive is the build history.
 
 **Discard consumed prototypes.** If this feature built the look from `prototypes/`
 - its Design reference pointed there and an early step ported `prototypes/theme.css`

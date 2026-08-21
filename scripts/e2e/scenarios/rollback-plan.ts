@@ -15,6 +15,23 @@ Change the default output from \`Hello world\` to \`Hello, world!\`.
 
 \`node src/greeting.js\` printed \`Hello, world!\`.
 `;
+const MERGE_FEATURE_ARCHIVE = `# Feature 2: Merge target
+
+**Type:** Feature
+**Status:** Complete
+
+## Goal
+
+Add a greeting helper through a merge commit.
+
+## Build steps
+
+- [x] 1. Add \`src/merge-greeting.js\`.
+
+## Verification
+
+\`node src/merge-greeting.js\` printed \`Hello from the merge target\`.
+`;
 
 import type { Runner } from "../harness.js";
 
@@ -46,6 +63,12 @@ async function run(t: Runner) {
     "Run /rollback 1 because the punctuation breaks a strict downstream consumer. Plan it and stop for review."
   );
   const rollbackSpec = t.read("blueprint/context/current-feature.md") || "";
+  const targetCommit = rollbackSpec.match(
+    /^\*\*Target commit:\*\*\s*`?([0-9a-f]{40})`?\s*$/im
+  )?.[1];
+  const targetParent = rollbackSpec.match(
+    /^\*\*Target parent:\*\*\s*`?([0-9a-f]{40})`?\s*$/im
+  )?.[1];
   const changedPaths = t
     .git("status", "--porcelain")
     .split("\n")
@@ -61,12 +84,79 @@ async function run(t: Runner) {
     t.read("blueprint/history/features/01-greeting-punctuation.md") === archiveBefore
   );
   t.check("a rollback spec was written", /^\*\*Type:\*\*\s*Rollback\s*$/im.test(rollbackSpec));
-  t.check("the spec records the exact feature commit", rollbackSpec.includes(featureCommit));
-  t.check("the spec records the exact feature parent", rollbackSpec.includes(featureParent));
+  t.check(
+    "the spec records the exact 40-character feature commit",
+    targetCommit === featureCommit
+  );
+  t.check(
+    "the spec records the exact 40-character feature parent",
+    targetParent === featureParent
+  );
   t.check("the spec records the user's reason", /downstream consumer/i.test(rollbackSpec));
   t.check(
     "only the current feature spec changed",
     changedPaths.length === 1 && changedPaths[0] === "blueprint/context/current-feature.md"
+  );
+
+  t.phase("rollback plans a merge target for implementation review");
+  t.git("restore", "blueprint/context/current-feature.md");
+  t.write(
+    "blueprint/build-plan.md",
+    "# Build Plan\n\n- [x] 1. Greeting punctuation\n- [ ] 2. Merge target\n"
+  );
+  t.git("add", "-A");
+  t.git("commit", "-m", "chore: prepare merge rollback target");
+  t.git("checkout", "-b", "feature/merge-target");
+  t.write("src/merge-greeting.js", 'console.log("Hello from the merge target");\n');
+  t.git("add", "-A");
+  t.git("commit", "-m", "feat: stage merge target product");
+  t.git("checkout", "main");
+  t.git("merge", "--no-ff", "--no-commit", "feature/merge-target");
+  t.write(
+    "blueprint/build-plan.md",
+    "# Build Plan\n\n- [x] 1. Greeting punctuation\n- [x] 2. Merge target\n"
+  );
+  t.write("blueprint/history/features/02-merge-target.md", MERGE_FEATURE_ARCHIVE);
+  t.git("add", "-A");
+  t.git("commit", "-m", "feat: add merge target");
+  const mergeTarget = t.git("rev-parse", "HEAD");
+  const mergeHeadBefore = t.git("rev-parse", "HEAD");
+  const mergeParents = t.git("show", "-s", "--format=%P", mergeTarget).split(" ").filter(Boolean);
+  const plannedMerge = t.agent(
+    "Run /rollback 2 because the merge target breaks a downstream consumer. Plan it and stop for review."
+  );
+  const mergeSpec = t.read("blueprint/context/current-feature.md") || "";
+
+  t.check("merge target fixture has two parents", mergeParents.length === 2);
+  t.check("merge target planning invocation succeeded", plannedMerge.status === 0);
+  t.check("merge target planning creates no rollback commit", t.git("rev-parse", "HEAD") === mergeHeadBefore);
+  t.check(
+    "merge target planning writes a rollback spec",
+    /^\*\*Type:\*\*\s*Rollback\s*$/im.test(mergeSpec)
+  );
+  t.check(
+    "merge target spec records the exact commit",
+    mergeSpec.includes(mergeTarget)
+  );
+
+  t.phase("implementation stops before reversing a merge target");
+  const implementation = t.agent(
+    "Run /implement for the current rollback spec. Stop if any rollback safeguard blocks the reverse patch; do not work around it."
+  );
+
+  t.check("merge target implementation invocation succeeded", implementation.status === 0);
+  t.check("merge target implementation creates no rollback commit", t.git("rev-parse", "HEAD") === mergeHeadBefore);
+  t.check(
+    "merge target implementation leaves the product code unchanged",
+    (t.read("src/merge-greeting.js") ?? "").includes("Hello from the merge target")
+  );
+  t.check(
+    "merge target implementation stages no reverse patch",
+    t.git("diff", "--cached", "--name-only").trim() === ""
+  );
+  t.check(
+    "implementation names the merge-parent blocker",
+    /merge target|merge commit|exactly one parent|single parent/i.test(implementation.resultText)
   );
 }
 

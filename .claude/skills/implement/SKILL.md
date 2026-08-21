@@ -59,17 +59,21 @@ spec. Reversing the whole commit would damage that state.
 
 Before the first rollback build step:
 
-1. Re-resolve the target archive's introducing commit and confirm it matches the
-   full Target commit SHA recorded in the approved spec.
-2. Confirm the target is an ancestor of `HEAD`, has the recorded single parent,
-   and the only dirty path before applying the patch is the approved rollback
-   spec. Stop on drift.
-3. Preview the target's product diff while excluding `.agents/**`, `.claude/**`,
+1. Read the approved spec's `Target commit` and `Target parent` fields. Stop
+   unless both values match `^[0-9a-f]{40}$`. Do not accept abbreviated,
+   uppercase, or otherwise malformed SHAs.
+2. Resolve the archive's introducing commit and verify it has exactly one parent.
+   Stop on a merge target. Resolve that single parent to a full SHA value.
+   Confirm the resolved commit exactly equals `Target commit` and the resolved
+   parent exactly equals `Target parent`. Stop on any mismatch.
+3. Confirm the resolved target is an ancestor of `HEAD` and the only dirty path
+   before applying the patch is the approved rollback spec. Stop on drift.
+4. Preview the resolved target's product diff while excluding `.agents/**`, `.claude/**`,
    `blueprint/**`, `AGENTS.md`, `CLAUDE.md`, and
    `prototypes/**`. Confirm the preview is non-empty and matches the Product
    paths in the spec.
-4. Apply that product diff in reverse with three-way conflict detection and
-   stage it. Substitute the two approved full SHAs before running:
+5. Apply that resolved product diff in reverse with three-way conflict detection
+   and stage it. Use only the resolved full SHA values before running:
 
        git diff --binary <target-parent> <target-commit> -- . \
          ':(exclude).agents/**' \
@@ -79,7 +83,7 @@ Before the first rollback build step:
          git apply --reverse --3way --index
 
    Never omit the protected pathspec exclusions for convenience.
-5. Show both `git diff --cached` and `git status`. Confirm no protected path is
+6. Show both `git diff --cached` and `git status`. Confirm no protected path is
    staged or modified before presenting the step for review.
 
 If the reverse patch conflicts, stop and report the exact paths and later commit
