@@ -1,6 +1,6 @@
 {
   "name": "@akash07k/create-ai-blueprint",
-  "version": "0.9.2",
+  "version": "0.10.0",
   "description": "Install a file-backed, spec-driven AI development workflow into a scaffolded app.",
   "license": "MIT",
   "author": "Akash Kakkar",
