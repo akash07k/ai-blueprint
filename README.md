@@ -856,7 +856,7 @@ local files.
 
 When editing shared workflow behavior, keep the matching files in `.agents/skills`
 and `.claude/skills` aligned. Tool-specific invocation text is fine, but the
-actual build loop should stay the same across both adapters.
+actual build loop should stay the same across each adapter.
 
 ## Support and contributing
 
@@ -917,6 +917,8 @@ style for another adapter:
 - Claude Code: `/onboard`, `/discovery`, `/doctor`, `/adopt`, `/overview`, `/brief`,
   `/feature`, `/debug`, `/fix`, `/tests`, `/ci`, `/implement`, `/check`, `/try`, `/audit`, `/rollback`,
   `/complete`, `/release`, `/prototype`, `/status`. Autopilot: `/autopilot`.
+- GitHub Copilot: ask Copilot to run the matching skill or follow the local
+  `.agents/skills/<skill>/SKILL.md` file.
 - Other tools: ask the agent to follow the matching `SKILL.md`.
 
 ```text

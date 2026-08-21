@@ -22,8 +22,8 @@ const modes: Record<string, Adapter[]> = {
   copilot: ["copilot"],
   codex: ["codex"],
   claude: ["claude"],
-  all: ["claude", "codex", "copilot"],
-  both: ["claude", "codex", "copilot"]
+  all: ["codex", "claude", "copilot"],
+  both: ["codex", "claude", "copilot"]
 };
 
 function getErrorCode(error: unknown): string | undefined {
@@ -222,7 +222,13 @@ async function main(): Promise<void> {
       await fs.mkdir(targetDir, { recursive: true });
       const installResult = run(
         process.execPath,
-        [binary, "--target", targetDir, `--${mode}`, "--yes"],
+        [
+          binary,
+          "--target",
+          targetDir,
+          ...(mode === "default" ? [] : [`--${mode}`]),
+          "--yes"
+        ],
         workspace,
         true
       );
@@ -231,8 +237,35 @@ async function main(): Promise<void> {
         throw new Error(`${mode} install did not print the optional CLI command`);
       }
 
-      if (mode === "both" && !installResult.stderr.includes("--both is deprecated")) {
+      if (
+        mode === "both" &&
+        !installResult.stderr.includes("Warning: --both is deprecated; use --all instead.")
+      ) {
         throw new Error("Deprecated --both alias did not emit its warning");
+      }
+
+      if (
+        mode === "copilot" &&
+        (!installResult.stdout.includes("Ask GitHub Copilot to run the onboard skill.") ||
+          installResult.stdout.includes("Claude Code:"))
+      ) {
+        throw new Error("copilot install did not print Copilot-specific guidance");
+      }
+
+      if (
+        (mode === "all" || mode === "both") &&
+        !installResult.stdout.includes(
+          "$onboard, /onboard, or ask GitHub Copilot to run the onboard skill."
+        )
+      ) {
+        throw new Error(`${mode} install did not print all-adapter guidance`);
+      }
+
+      if (
+        (mode === "all" || mode === "both") &&
+        !installResult.stdout.includes("Claude Code: if this project was already open")
+      ) {
+        throw new Error(`${mode} install did not print Claude restart guidance`);
       }
 
       await validateInstall(targetDir, metadata.version, adapters);
@@ -270,9 +303,15 @@ async function main(): Promise<void> {
         true
       );
       const status = parseRecord(jsonStatusResult.stdout, `${mode} JSON status`);
+      const blueprint = status.blueprint;
 
       if (
         status.schemaVersion !== 1 ||
+        typeof blueprint !== "object" ||
+        blueprint === null ||
+        !Array.isArray((blueprint as { adapters?: unknown }).adapters) ||
+        JSON.stringify((blueprint as { adapters: unknown[] }).adapters) !==
+          JSON.stringify(adapters) ||
         !Array.isArray(status.warnings) ||
         !status.warnings.some(
           (warning) =>
@@ -368,6 +407,7 @@ async function validateInstall(
   const expectsCodex = adapters.includes("codex");
   const expectsClaude = adapters.includes("claude");
   const expectsCopilot = adapters.includes("copilot");
+  const expectsSharedSkills = expectsCodex || expectsCopilot;
   const expectedPaths = [
     "AGENTS.md",
     "blueprint/README.md",
@@ -378,7 +418,7 @@ async function validateInstall(
     "blueprint/.state/.gitignore"
   ];
 
-  if (expectsCodex || expectsCopilot) {
+  if (expectsSharedSkills) {
     expectedPaths.push(
       ".agents/skills/discovery/SKILL.md",
       ".agents/skills/onboard/SKILL.md",
@@ -403,7 +443,7 @@ async function validateInstall(
   await requireMissing(path.join(targetDir, ".ai-blueprint"));
   await requireMissing(path.join(targetDir, ".github", "copilot-instructions.md"));
 
-  if (!expectsCodex && !expectsCopilot) {
+  if (!expectsSharedSkills) {
     await requireMissing(path.join(targetDir, ".agents"));
   }
 
@@ -427,7 +467,10 @@ async function validateInstall(
     throw new Error(`Installed version mismatch: ${manifest.version} !== ${version}`);
   }
 
-  if (JSON.stringify(manifest.adapters) !== JSON.stringify(adapters)) {
+  if (
+    JSON.stringify([...manifest.adapters].sort()) !==
+    JSON.stringify([...adapters].sort())
+  ) {
     throw new Error(
       `Installed adapters mismatch: ${manifest.adapters.join(", ")} !== ${adapters.join(", ")}`
     );
@@ -435,7 +478,7 @@ async function validateInstall(
 
   const expectedManagedFiles = ["blueprint/README.md"];
 
-  if (expectsCodex || expectsCopilot) {
+  if (expectsSharedSkills) {
     expectedManagedFiles.push(
       ...(await listFiles(path.join(targetDir, ".agents", "skills"))).map(
         (file) => `.agents/skills/${file}`

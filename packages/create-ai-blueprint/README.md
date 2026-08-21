@@ -50,8 +50,9 @@ a completed feature from its archived spec and exact git commit. Rollbacks keep
 the original feature archive and use the normal implement, check, and complete
 gates.
 
-If you install the Blueprint while Claude Code is already open in the project,
-restart Claude Code in that folder so the newly added project skills appear.
+If you install `--claude` or `--all` while Claude Code is already open in the
+project, restart Claude Code in that folder so the newly added project skills
+appear.
 
 ## Tool support
 
@@ -77,6 +78,11 @@ npx @akash07k/create-ai-blueprint@latest -- --target ./my-app
 The same flags work with `npm create @akash07k/ai-blueprint@latest -- ...`.
 `--all` installs every adapter. `--both` is a warning-emitting deprecated alias
 for `--all`.
+
+The installer defaults to GitHub Copilot. `--both` remains as a deprecated alias
+for `--all` and prints a warning. GitHub Copilot uses `AGENTS.md` and the shared
+`.agents/skills/` files; the installer does not manage
+`.github/copilot-instructions.md`.
 
 Use `--force` to overwrite existing Blueprint files. Without `--force`, the
 installer asks before overwriting in an interactive terminal and exits in

@@ -71,6 +71,7 @@ test("readProjectMetadata keeps manifest-backed Copilot distinct from legacy Cod
 
   const metadata = await readProjectMetadata(projectRoot);
 
+  assert.equal(metadata.blueprint.version, "1.0.0");
   assert.deepEqual(metadata.blueprint.adapters, ["copilot"]);
 });
 

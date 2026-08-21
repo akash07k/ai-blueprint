@@ -32,6 +32,7 @@ test("readProjectStatus reports active work, findings, Git, and the next step", 
 `,
     branch: "feature/status-command"
   });
+
   await fs.appendFile(path.join(projectRoot, "src.ts"), "export const dirty = true;\n");
 
   const status = await readProjectStatus(projectRoot);
@@ -67,6 +68,20 @@ test("readProjectStatus reports active work, findings, Git, and the next step", 
   });
   assert.equal(status.completion.state, "blocked");
   assert.deepEqual(status.warnings, []);
+});
+
+test("readProjectStatus reports Copilot from the manifest", async (t) => {
+  const projectRoot = await createProject(t, {
+    currentWork: resetCurrentWork(),
+    findings: emptyFindings(),
+    branch: "feature/copilot-status",
+    adapters: ["copilot"]
+  });
+
+  const status = await readProjectStatus(projectRoot);
+
+  assert.deepEqual(status.blueprint.adapters, ["copilot"]);
+  assert.match(formatHumanStatus(status), /Adapters\s+copilot/);
 });
 
 test("readProjectStatus selects overview before new feature work", async (t) => {
@@ -237,6 +252,7 @@ test("shouldUseColor requires a TTY and respects NO_COLOR", () => {
 });
 
 interface ProjectOptions {
+  adapters?: readonly ("claude" | "codex" | "copilot")[];
   currentWork: string;
   findings: string;
   branch: string;
@@ -278,7 +294,7 @@ async function createProject(
     `${JSON.stringify({
       schemaVersion: 1,
       version: "0.8.0",
-      adapters: ["codex", "claude"],
+      adapters: options.adapters || ["codex", "claude"],
       managedFiles: {}
     }, null, 2)}\n`
   );

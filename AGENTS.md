@@ -44,7 +44,7 @@ can delete `.agents/`, but should keep `AGENTS.md` because `CLAUDE.md` imports
 it.
 
 When changing shared workflow behavior, update the matching skill in both
-adapter folders so Codex and Claude Code stay aligned.
+adapter folders so Codex, Claude Code, and GitHub Copilot stay aligned.
 
 Core skills:
 
