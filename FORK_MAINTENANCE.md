@@ -27,7 +27,12 @@ request or in an installer template.
    The clean private integration branch and its private remote counterpart. They
    contain the current upstream baseline plus the small, ordered set of changes
    this fork keeps regardless of whether upstream accepts them. `main` never
-   contains an upstream pull request that is still under review.
+   contains source commits from an upstream pull request still under review.
+   When the fork needs that behavior, it implements or retains an equivalent,
+   separate fork-only commit on `main`. If upstream rejects the pull request,
+   that private commit remains the maintained fork behavior. If upstream accepts
+   it, reconcile the private behavior against upstream rather than treating it
+   as the upstream pull request.
 
 3. `fork/with-<topic>`
 
