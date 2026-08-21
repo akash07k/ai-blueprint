@@ -867,6 +867,7 @@ actual build loop should stay the same across both adapters.
 - Follow [SECURITY.md](SECURITY.md) to report suspected vulnerabilities
   privately.
 - Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
+- Follow [FORK_MAINTENANCE.md](FORK_MAINTENANCE.md) to maintain a personal fork.
 - Review [CHANGELOG.md](CHANGELOG.md) for published package history.
 
 ## License
