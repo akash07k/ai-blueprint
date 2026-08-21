@@ -5,6 +5,7 @@ import path from "node:path";
 import test, { type TestContext } from "node:test";
 
 import {
+  ADAPTER_PROMPT,
   getTemplateEntries,
   getGlobalCliInstallCommand,
   isGlobalCliInstallConfirmed,
@@ -13,6 +14,18 @@ import {
   shouldOfferGlobalCliInstall
 } from "../bin/create-ai-blueprint.js";
 import { CONTROL_DIR, MANIFEST_PATH, applyPreparedUpdate, prepareUpdate, readManifest, writeInstallManifest } from "../lib/update.js";
+
+test("adapter prompt lists Copilot first and defaults to it", () => {
+  assert.equal(
+    ADAPTER_PROMPT,
+    "Install which adapter?\n" +
+      "  [1] GitHub Copilot (default)\n" +
+      "  [2] Codex\n" +
+      "  [3] Claude Code\n" +
+      "  [4] all\n" +
+      "> "
+  );
+});
 
 test("parseArgs supports install and update modes", () => {
   assert.equal(parseArgs([]).command, "install");

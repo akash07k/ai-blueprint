@@ -18,7 +18,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const packageRoot = path.resolve(__dirname, "..", "..");
 const templateRoot = path.join(packageRoot, "template");
 const ADAPTER_PROMPT =
-  "Install which adapter? [1] GitHub Copilot (default), [2] Codex, [3] Claude Code, [4] all: ";
+  "Install which adapter?\n" +
+  "  [1] GitHub Copilot (default)\n" +
+  "  [2] Codex\n" +
+  "  [3] Claude Code\n" +
+  "  [4] all\n" +
+  "> ";
 
 interface CliOptions {
   adapter: AdapterMode | null;
