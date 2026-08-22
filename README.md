@@ -245,14 +245,62 @@ Blueprint-owned workflow files under `.agents/skills/`, `.claude/skills/`, and
 `blueprint/README.md`. They do not overwrite `AGENTS.md`, `CLAUDE.md`, project
 plans, build plans, context, history, references, or prototypes.
 
-New installs record managed-file hashes in `blueprint/.state/manifest.json`. If a
-managed file changes locally, the updater reports a conflict instead of silently
-overwriting it. An interactive update can back up and replace conflicts after
-confirmation. In non-interactive use, pass `--force` to do the same explicitly.
-Backups are stored under `blueprint/.state/backups/` and ignored by git.
+New installs and managed updates record their scoped package identity, exact
+version, selected adapters, and managed-file hashes in
+`blueprint/.state/manifest.json`. If a managed file changes locally, the updater
+reports a conflict instead of silently overwriting it. An interactive update can
+back up and replace conflicts after confirmation. In non-interactive use, pass
+`--force` to do the same explicitly. Backups are stored under
+`blueprint/.state/backups/` and ignored by git.
 
 Older installs without a manifest can use the same command. Matching files are
 adopted into the manifest, while differing managed files are treated as conflicts.
+
+### Restore generated adapter skills
+
+Consuming applications do not commit Blueprint-generated adapter skills. The
+manifest lock records their expected SHA-256 hashes, and Blueprint writes a marked
+root `.gitignore` block for only its generated skill directories under
+`.agents/skills/` and `.claude/skills/`. It leaves `.agents`, `.claude`, and
+custom sibling skills trackable.
+
+The marker block ignores newly generated skills, but it cannot untrack paths
+already committed to Git. Review its managed entries, then remove only those
+individual generated paths from Git's index while leaving the files and custom
+sibling skills intact:
+
+```bash
+git rm -r --cached -- .agents/skills/<generated-skill>
+```
+
+Use `sync` to restore only those generated skills:
+
+```bash
+npx @akash07k/create-ai-blueprint@<locked-version> sync --dry-run
+npx @akash07k/create-ai-blueprint@<locked-version> sync
+```
+
+Replace `<locked-version>` with the exact version in
+`blueprint/.state/manifest.json`. Sync restores missing generated skills, leaves
+matching skills unchanged, and requires `--force` to back up and replace modified
+skills. It never fetches or advances a version, and it never changes other
+workflow or user-owned files.
+
+Sync checks generated-skill paths for symbolic links, non-directory parents, and
+target changes at validation and write checkpoints. Node 22 does not provide
+directory-handle-relative no-follow mutations, so sync assumes no untrusted
+concurrent process replaces a file or directory after its final safety check.
+
+Sync requires the running package to exactly match the manifest lock. On a
+mismatch it makes no changes and prints the exact version-pinned recovery command:
+
+```bash
+npx @akash07k/create-ai-blueprint@0.10.0 sync
+```
+
+Use `npx @akash07k/create-ai-blueprint@latest update` as the only upgrade path.
+It updates all Blueprint-managed content, including generated skills, and
+advances the manifest lock through the normal conflict checks.
 
 ### Check project status
 
@@ -263,8 +311,9 @@ npx @akash07k/create-ai-blueprint@latest status
 ```
 
 It reports plan progress, active work, findings, Git state, drift warnings,
-completion blockers, and one exact next action. Use JSON when another local tool
-needs the same versioned state:
+generated-skill health, completion blockers, and one exact next action. Missing,
+modified, legacy, and version-mismatched generated skills include sync recovery
+guidance. Use JSON when another local tool needs the same versioned state:
 
 ```bash
 npx @akash07k/create-ai-blueprint@latest status --json
@@ -278,12 +327,14 @@ npm install --global @akash07k/create-ai-blueprint@latest
 ```
 
 The prompt defaults to no and never runs during non-interactive or `--yes`
-installs. Global installation exposes `blueprint status`. Status reads Markdown
-and Git state without editing either one.
+installs. Global installation exposes `blueprint status` and `blueprint sync`.
+Status reads Markdown and Git state without editing either one.
 
-The optional global `blueprint` command is status-only. Continue to use
+The optional global `blueprint` command supports only status and sync. It rejects
+install, update, and upgrade commands. Continue to use
 `npx @akash07k/create-ai-blueprint@latest` for installation and
-`npx @akash07k/create-ai-blueprint@latest update` for managed workflow updates.
+`npx @akash07k/create-ai-blueprint@latest update` for the only managed upgrade
+path.
 
 ## Tool support
 

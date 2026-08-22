@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
+import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -186,12 +187,194 @@ test("readProjectStatus selects the next build-plan feature when idle", async (t
   });
 });
 
-test("readProjectStatus reports a manifest-backed Copilot adapter", async (t) => {
+test("status reports legacy generated skills with matching-package sync guidance", async (t) => {
+    const projectRoot = await createProject(t, {
+      currentWork: resetCurrentWork(),
+      findings: emptyFindings(),
+      branch: "chore/setup"
+    });
+    await writeSkillManifest(projectRoot, {
+      schemaVersion: 1,
+      version: "0.10.0",
+      skills: { ".agents/skills/check/SKILL.md": "Check skill\n" }
+    });
+
+    const status = await readProjectStatus(projectRoot, { packageVersion: "0.10.0" });
+    const warning = status.warnings.find((entry) => entry.code === "legacy_generated_skills");
+
+    assert.equal(status.schemaVersion, 1);
+    assert.match(
+      warning?.message || "",
+      /npx @akash07k\/create-ai-blueprint@0\.10\.0 sync/
+    );
+    assert.match(formatHumanStatus(status), /legacy manifest/);
+});
+
+test("status reports missing generated skills without writes", async (t) => {
+    const projectRoot = await createProject(t, {
+      currentWork: resetCurrentWork(),
+      findings: emptyFindings(),
+      branch: "chore/setup"
+    });
+    const skillPath = path.join(projectRoot, ".agents", "skills", "check", "SKILL.md");
+    await writeSkillManifest(projectRoot, {
+      schemaVersion: 2,
+      version: "0.10.0",
+      skills: { ".agents/skills/check/SKILL.md": "Check skill\n" }
+    });
+    const manifestPath = path.join(projectRoot, "blueprint", ".state", "manifest.json");
+    const manifestBefore = await fs.readFile(manifestPath, "utf8");
+    await fs.rm(skillPath);
+
+    const status = await readProjectStatus(projectRoot, { packageVersion: "0.10.0" });
+    const warning = status.warnings.find((entry) => entry.code === "missing_generated_skills");
+
+    assert.match(warning?.message || "", /1 generated Blueprint skill file is missing/);
+    assert.match(
+      warning?.message || "",
+      /npx @akash07k\/create-ai-blueprint@0\.10\.0 sync/
+    );
+    await assert.rejects(fs.access(skillPath), { code: "ENOENT" });
+    assert.equal(await fs.readFile(manifestPath, "utf8"), manifestBefore);
+});
+
+test("status reports modified generated skills with force recovery guidance", async (t) => {
+    const projectRoot = await createProject(t, {
+      currentWork: resetCurrentWork(),
+      findings: emptyFindings(),
+      branch: "chore/setup"
+    });
+    const skillPath = path.join(projectRoot, ".agents", "skills", "check", "SKILL.md");
+    await writeSkillManifest(projectRoot, {
+      schemaVersion: 2,
+      version: "0.10.0",
+      skills: { ".agents/skills/check/SKILL.md": "Check skill\n" }
+    });
+    await fs.writeFile(skillPath, "Modified skill\n");
+
+    const status = await readProjectStatus(projectRoot, { packageVersion: "0.10.0" });
+    const warning = status.warnings.find((entry) => entry.code === "modified_generated_skills");
+
+    assert.match(
+      warning?.message || "",
+      /npx @akash07k\/create-ai-blueprint@0\.10\.0 sync --force/
+    );
+    assert.equal(await fs.readFile(skillPath, "utf8"), "Modified skill\n");
+});
+
+test("status uses global sync guidance only for the global command surface", async (t) => {
   const projectRoot = await createProject(t, {
     currentWork: resetCurrentWork(),
     findings: emptyFindings(),
     branch: "chore/setup"
   });
+  const skillPath = path.join(projectRoot, ".agents", "skills", "check", "SKILL.md");
+  await writeSkillManifest(projectRoot, {
+    schemaVersion: 2,
+    version: "0.10.0",
+    skills: { ".agents/skills/check/SKILL.md": "Check skill\n" }
+  });
+  await fs.rm(skillPath);
+
+  const packageStatus = await readProjectStatus(projectRoot, { packageVersion: "0.10.0" });
+  const globalStatus = await readProjectStatus(projectRoot, {
+    packageVersion: "0.10.0",
+    syncSurface: "global"
+  });
+  const packageWarning = packageStatus.warnings.find(
+    (entry) => entry.code === "missing_generated_skills"
+  );
+  const globalWarning = globalStatus.warnings.find(
+    (entry) => entry.code === "missing_generated_skills"
+  );
+
+  assert.match(
+    packageWarning?.message || "",
+    /npx @akash07k\/create-ai-blueprint@0\.10\.0 sync/
+  );
+  assert.doesNotMatch(packageWarning?.message || "", /`blueprint sync`/);
+  assert.match(globalWarning?.message || "", /`blueprint sync`/);
+});
+
+test("status reports unsafe generated skill parents without writes", async (t) => {
+  for (const parentType of ["symbolic-link", "non-directory"] as const) {
+    const projectRoot = await createProject(t, {
+      currentWork: resetCurrentWork(),
+      findings: emptyFindings(),
+      branch: `chore/${parentType}`
+    });
+    const manifestPath = path.join(projectRoot, "blueprint", ".state", "manifest.json");
+    const agentsPath = path.join(projectRoot, ".agents");
+    const outsideDir = path.join(projectRoot, "outside");
+    await writeSkillManifest(projectRoot, {
+      schemaVersion: 2,
+      version: "0.10.0",
+      skills: { ".agents/skills/check/SKILL.md": "Check skill\n" }
+    });
+    const manifestBefore = await fs.readFile(manifestPath, "utf8");
+    await fs.rm(agentsPath, { recursive: true });
+
+    if (parentType === "symbolic-link") {
+      await fs.mkdir(outsideDir);
+      await fs.symlink(outsideDir, agentsPath);
+    } else {
+      await fs.writeFile(agentsPath, "not a directory\n");
+    }
+
+    const status = await readProjectStatus(projectRoot, { packageVersion: "0.10.0" });
+    const warning = status.warnings.find(
+      (entry) => entry.code === "unsafe_generated_skill_paths"
+    );
+
+    assert.match(warning?.message || "", /Manually replace/);
+    assert.match(warning?.message || "", /Do not use --force/);
+    assert.equal(await fs.readFile(manifestPath, "utf8"), manifestBefore);
+  }
+});
+
+test("status recommends the pinned package when generated skills mismatch", async (t) => {
+    const projectRoot = await createProject(t, {
+      currentWork: resetCurrentWork(),
+      findings: emptyFindings(),
+      branch: "chore/setup"
+    });
+    await writeSkillManifest(projectRoot, {
+      schemaVersion: 2,
+      version: "0.10.0",
+      skills: { ".agents/skills/check/SKILL.md": "Check skill\n" }
+    });
+
+    const status = await readProjectStatus(projectRoot, { packageVersion: "0.11.0" });
+    const warning = status.warnings.find(
+      (entry) => entry.code === "generated_skills_package_version_mismatch"
+    );
+
+    assert.match(
+      warning?.message || "",
+      /npx @akash07k\/create-ai-blueprint@0\.10\.0 sync/
+    );
+    assert.equal(status.schemaVersion, 1);
+    assert.deepEqual(Object.keys(status).sort(), [
+      "blueprint",
+      "completion",
+      "currentWork",
+      "findings",
+      "git",
+      "health",
+      "nextAction",
+      "plans",
+      "project",
+      "schemaVersion",
+      "warnings"
+    ]);
+  });
+
+  test("readProjectStatus reports a manifest-backed Copilot adapter", async (t) => {
+    const projectRoot = await createProject(t, {
+      currentWork: resetCurrentWork(),
+      findings: emptyFindings(),
+      branch: "chore/setup"
+    });
 
   await fs.writeFile(
     path.join(projectRoot, "blueprint", ".state", "manifest.json"),
@@ -292,7 +475,8 @@ async function createProject(
   await fs.writeFile(
     path.join(stateRoot, "manifest.json"),
     `${JSON.stringify({
-      schemaVersion: 1,
+      schemaVersion: 2,
+      packageName: "@akash07k/create-ai-blueprint",
       version: "0.8.0",
       adapters: options.adapters || ["codex", "claude"],
       managedFiles: {}
@@ -347,4 +531,42 @@ function emptyFindings(): string {
 
 _No findings recorded._
 `;
+}
+
+async function writeSkillManifest(
+  projectRoot: string,
+  {
+    schemaVersion,
+    version,
+    skills
+  }: {
+    schemaVersion: 1 | 2;
+    version: string;
+    skills: Record<string, string>;
+  }
+): Promise<void> {
+  for (const [relativePath, content] of Object.entries(skills)) {
+    const skillPath = path.join(projectRoot, ...relativePath.split("/"));
+    await fs.mkdir(path.dirname(skillPath), { recursive: true });
+    await fs.writeFile(skillPath, content);
+  }
+
+  const managedFiles = Object.fromEntries(
+    Object.entries(skills).map(([relativePath, content]) => [
+      relativePath,
+      crypto.createHash("sha256").update(content).digest("hex")
+    ])
+  );
+  const manifest = {
+    schemaVersion,
+    version,
+    adapters: ["codex"],
+    managedFiles,
+    ...(schemaVersion === 2 ? { packageName: "@akash07k/create-ai-blueprint" } : {})
+  };
+
+  await fs.writeFile(
+    path.join(projectRoot, "blueprint", ".state", "manifest.json"),
+    `${JSON.stringify(manifest, null, 2)}\n`
+  );
 }

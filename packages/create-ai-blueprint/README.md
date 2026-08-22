@@ -124,6 +124,61 @@ The first update of a legacy install creates the manifest. Files that already
 match the current package are adopted automatically. Differing files remain
 conflicts so local changes are not lost.
 
+## Restoring generated adapter skills
+
+New installs and managed updates write `blueprint/.state/manifest.json` as the
+single Blueprint lock. Schema 2 records the scoped package name, exact package
+version, selected adapters, and SHA-256 hashes for Blueprint-owned files.
+
+Generated adapter skills under `.agents/skills/` and `.claude/skills/` are
+recovered from the bundled package template, not committed by consuming
+applications. Blueprint adds a marked root `.gitignore` block that ignores only
+its generated skill directories. It does not ignore `.agents`, `.claude`, or
+custom sibling skills, so custom skills remain trackable.
+
+The marker block ignores newly generated skills, but it cannot untrack paths
+already committed to Git. Review its managed entries, then remove only those
+individual generated paths from Git's index while leaving the files and custom
+sibling skills intact:
+
+```bash
+git rm -r --cached -- .agents/skills/<generated-skill>
+```
+
+Preview a skills-only recovery without writing:
+
+```bash
+npx @akash07k/create-ai-blueprint@<locked-version> sync --dry-run
+```
+
+Run `sync` with the exact version in `blueprint/.state/manifest.json`:
+
+```bash
+npx @akash07k/create-ai-blueprint@<locked-version> sync
+```
+
+It restores missing generated skills, leaves matching files untouched, and
+refuses locally modified generated skills unless you pass `--force`. Force backs
+up conflicting skills before replacement. Sync never fetches or advances a
+package version, and it never changes non-skill workflow files.
+
+Sync checks generated-skill paths for symbolic links, non-directory parents, and
+target changes at validation and write checkpoints. Node 22 does not provide
+directory-handle-relative no-follow mutations, so sync assumes no untrusted
+concurrent process replaces a file or directory after its final safety check.
+
+If the running package version differs from the manifest, sync writes nothing
+and prints the exact version-pinned recovery command. Run the printed command,
+for example:
+
+```bash
+npx @akash07k/create-ai-blueprint@0.10.0 sync
+```
+
+Use `npx @akash07k/create-ai-blueprint@latest update` as the only upgrade path.
+It intentionally updates all Blueprint-managed content, including generated
+skills, and advances the lock after its normal conflict checks.
+
 ## Checking project status
 
 Run the read-only status command from a Blueprint project or any directory
@@ -134,8 +189,10 @@ npx @akash07k/create-ai-blueprint@latest status
 ```
 
 It reports build-plan progress, active work, findings, Git state, drift
-warnings, completion blockers, and one suggested next action. For scripts and
-integrations, request the versioned JSON object:
+warnings, generated-skill health, completion blockers, and one suggested next
+action. It warns about missing, modified, legacy, or version-mismatched generated
+skills with the appropriate sync recovery command. For scripts and integrations,
+request the versioned JSON object:
 
 ```bash
 npx @akash07k/create-ai-blueprint@latest status --json
@@ -149,13 +206,16 @@ npm install --global @akash07k/create-ai-blueprint@latest
 ```
 
 The prompt defaults to no and is skipped for non-interactive and `--yes` runs.
-Global installation exposes the shorter forms `blueprint status` and
-`blueprint status --json`. Use `--target ./my-app` to inspect an explicit
-project directory. Status never edits project or Git state.
+Global installation exposes the shorter forms `blueprint status`,
+`blueprint status --json`, and `blueprint sync`. Use `--target ./my-app` to
+inspect or recover an explicit project directory. Status never edits project or
+Git state.
 
-The optional global `blueprint` command is status-only. Continue to use
+The optional global `blueprint` command supports only status and sync. It rejects
+install, update, and upgrade commands. Continue to use
 `npx @akash07k/create-ai-blueprint@latest` for installation and
-`npx @akash07k/create-ai-blueprint@latest update` for managed workflow updates.
+`npx @akash07k/create-ai-blueprint@latest update` for the only managed upgrade
+path.
 
 ## Help and contributing
 
