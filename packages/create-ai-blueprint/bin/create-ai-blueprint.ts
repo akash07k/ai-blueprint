@@ -11,8 +11,17 @@ import {
   readProjectStatus,
   shouldUseColor
 } from "../lib/status.js";
-import { MANIFEST_PATH, applyPreparedUpdate, prepareUpdate, writeInstallManifest } from "../lib/update.js";
-import type { AdapterMode, PreparedUpdate, UpdateResult } from "../lib/update.js";
+import {
+  MANIFEST_PATH,
+  PACKAGE_NAME,
+  applyPreparedSync,
+  applyPreparedUpdate,
+  prepareSync,
+  prepareUpdate,
+  readManifest,
+  writeInstallManifest
+} from "../lib/update.js";
+import type { AdapterMode, PreparedSync, PreparedUpdate, UpdateResult } from "../lib/update.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const packageRoot = path.resolve(__dirname, "..", "..");
@@ -27,7 +36,7 @@ const ADAPTER_PROMPT =
 
 interface CliOptions {
   adapter: AdapterMode | null;
-  command: "install" | "status" | "update";
+  command: "install" | "status" | "sync" | "update";
   deprecatedBoth: boolean;
   dryRun: boolean;
   force: boolean;
@@ -36,6 +45,12 @@ interface CliOptions {
   target: string | null;
   version: boolean;
   yes: boolean;
+}
+
+interface CliRuntime {
+  packageName: string;
+  templateRoot: string;
+  version: string;
 }
 
 interface TemplateEntry {
@@ -47,7 +62,12 @@ const adapterChoices = new Set<AdapterMode>(["all", "claude", "codex", "copilot"
 
 async function runCli(
   args: readonly string[] = process.argv.slice(2),
-  surface: "package" | "global" = "package"
+  surface: "package" | "global" = "package",
+  runtime: CliRuntime = {
+    packageName: PACKAGE_NAME,
+    templateRoot,
+    version: readPackageVersion()
+  }
 ): Promise<void> {
   if (surface === "global" && args.length === 0) {
     printGlobalHelp();
@@ -62,20 +82,23 @@ async function runCli(
   }
 
   if (options.version) {
-    console.log(readPackageVersion());
+    console.log(runtime.version);
     return;
   }
 
-  if (surface === "global" && options.command !== "status") {
+  if (surface === "global" && options.command !== "status" && options.command !== "sync") {
     throw new Error(
-      "The global blueprint command supports project status only. Use `npx @akash07k/create-ai-blueprint@latest` to install Blueprint or `npx @akash07k/create-ai-blueprint@latest update` to update it."
+      "The global blueprint command supports project status and skill sync only. Use `npx @akash07k/create-ai-blueprint@latest` to install Blueprint or `npx @akash07k/create-ai-blueprint@latest update` to update it."
     );
   }
 
   const targetDir = path.resolve(process.cwd(), options.target || ".");
 
   if (options.command === "status") {
-    const status = await readProjectStatus(targetDir);
+    const status = await readProjectStatus(targetDir, {
+      packageVersion: runtime.version,
+      syncSurface: surface
+    });
     console.log(
       options.json
         ? JSON.stringify(status, null, 2)
@@ -84,19 +107,42 @@ async function runCli(
     return;
   }
 
-  if (!fsSync.existsSync(templateRoot)) {
+  if (!fsSync.existsSync(runtime.templateRoot)) {
     throw new Error(
       "Installer template is missing. Run `npm run prepare-template` before local testing."
     );
   }
 
-  const version = readPackageVersion();
+  if (options.command === "sync") {
+    const manifest = await readManifest(targetDir);
+
+    if (manifest && manifest.version !== runtime.version) {
+      printSyncRecovery(manifest.version, options.target, targetDir);
+      return;
+    }
+
+    const prepared = await prepareSync({
+      targetDir,
+      templateRoot: runtime.templateRoot,
+      packageName: runtime.packageName,
+      version: runtime.version
+    });
+    printSyncPlan(prepared);
+
+    if (options.dryRun) {
+      return;
+    }
+
+    const result = await applyPreparedSync(prepared, { replaceConflicts: options.force });
+    printSyncSuccess(prepared, result);
+    return;
+  }
 
   if (options.command === "update") {
     const prepared = await prepareUpdate({
       targetDir,
-      templateRoot,
-      version
+      templateRoot: runtime.templateRoot,
+      version: runtime.version
     });
     printUpdatePlan(prepared);
 
@@ -135,12 +181,12 @@ async function runCli(
   await writeInstallManifest({
     targetDir,
     templateRoot,
-    version,
+    version: runtime.version,
     adapter
   });
 
   printSuccess(targetDir, adapter, entries, existingEntries);
-  await offerGlobalCliInstall(options, version);
+  await offerGlobalCliInstall(options, runtime.version);
 }
 
 function parseArgs(args: readonly string[]): CliOptions {
@@ -167,7 +213,7 @@ function parseArgs(args: readonly string[]): CliOptions {
       continue;
     }
 
-    if (arg === "status" || arg === "update") {
+    if (arg === "status" || arg === "sync" || arg === "update") {
       if (commandSeen) {
         throw new Error("Choose only one command.");
       }
@@ -252,6 +298,10 @@ function parseArgs(args: readonly string[]): CliOptions {
     throw new Error(
       "Update detects the installed adapters. Do not pass --codex, --claude, --copilot, --all, or --both."
     );
+  }
+
+  if (options.command === "sync" && (options.adapter || options.json || options.yes)) {
+    throw new Error("Sync accepts only --target, --dry-run, --force, --help, and --version options.");
   }
 
   if (options.command !== "status" && options.json) {
@@ -481,6 +531,25 @@ function printUpdatePlan(prepared: PreparedUpdate): void {
   );
 }
 
+function printSyncPlan(prepared: PreparedSync): void {
+  const { plan } = prepared;
+
+  console.log("AI Blueprint skill sync plan.");
+  console.log(`Target: ${prepared.targetDir}`);
+  console.log(`Locked version: ${prepared.manifest.version}`);
+  console.log(`Add: ${plan.add.length}`);
+  console.log(`Conflicts: ${plan.conflicts.length}`);
+  console.log(`Unchanged: ${plan.unchanged.length}`);
+  console.log("Scope: generated Blueprint adapter skills only.");
+
+  if (plan.conflicts.length > 0) {
+    console.log("Conflicting generated skills:");
+    for (const conflict of plan.conflicts) {
+      console.log(`- ${conflict.path} (${conflict.reason})`);
+    }
+  }
+}
+
 function printSuccess(
   targetDir: string,
   adapter: AdapterMode,
@@ -528,6 +597,46 @@ function printUpdateSuccess(prepared: PreparedUpdate, result: UpdateResult): voi
   console.log(
     "Preserved user-owned plans, context, history, references, prototypes, AGENTS.md, and CLAUDE.md."
   );
+}
+
+function printSyncSuccess(prepared: PreparedSync, result: UpdateResult): void {
+  console.log("AI Blueprint generated skills synchronized.");
+  console.log(`Version: ${prepared.manifest.version}`);
+  console.log(`Added: ${result.added}`);
+  console.log(`Updated: ${result.updated}`);
+  console.log(`Unchanged: ${result.unchanged}`);
+
+  if (result.backupDir) {
+    console.log(`Backup: ${path.relative(prepared.targetDir, result.backupDir)}`);
+  }
+}
+
+function printSyncRecovery(
+  lockedVersion: string,
+  requestedTarget: string | null,
+  targetDir: string
+): void {
+  const targetArgument =
+    requestedTarget && targetDir !== path.resolve(process.cwd())
+      ? ` --target ${formatCommandArgument(requestedTarget)}`
+      : "";
+
+  console.log(
+    `This project is locked to Blueprint ${lockedVersion}. Run:\n` +
+      `npx @akash07k/create-ai-blueprint@${lockedVersion} sync${targetArgument}`
+  );
+}
+
+function formatCommandArgument(value: string, platform: NodeJS.Platform = process.platform): string {
+  if (/^[A-Za-z0-9_./:\\-]+$/.test(value)) {
+    return value;
+  }
+
+  if (platform === "win32") {
+    return `"${value}"`;
+  }
+
+  return `'${value.replaceAll("'", "'\"'\"'")}'`;
 }
 
 function getNextCommand(adapter: AdapterMode): string {
@@ -588,7 +697,7 @@ async function offerGlobalCliInstall(
 
   try {
     await installGlobalCli(version);
-    console.log("\nGlobal CLI installed. Run `blueprint status` from a Blueprint project.");
+    console.log("\nGlobal CLI installed. Run `blueprint status` or `blueprint sync` from a Blueprint project.");
   } catch (error: unknown) {
     console.error(
       `\nGlobal CLI was not installed: ${error instanceof Error ? error.message : String(error)}`
@@ -650,7 +759,7 @@ async function installGlobalCli(version: string): Promise<void> {
 }
 
 function printOptionalGlobalCli(command: string): void {
-  console.log(`\nOptional global CLI:\n  ${command}\n  blueprint status`);
+  console.log(`\nOptional global CLI:\n  ${command}\n  blueprint status\n  blueprint sync`);
 }
 
 function printHelp(): void {
@@ -661,6 +770,7 @@ Install AI Blueprint into an already scaffolded app.
 Usage:
   npx @akash07k/create-ai-blueprint@latest
   npx @akash07k/create-ai-blueprint@latest update
+  npx @akash07k/create-ai-blueprint@<locked-version> sync
   npx @akash07k/create-ai-blueprint@latest status
   npx @akash07k/create-ai-blueprint@latest status --json
   npx @akash07k/create-ai-blueprint@latest -- --copilot
@@ -676,18 +786,20 @@ Options:
   --all            Install Codex, Claude Code, and GitHub Copilot adapters
   --both           Deprecated alias for --all
   --target, -t     Target directory, defaults to the current directory
-  --force, -f      Install: overwrite matching files. Update: back up and replace managed conflicts
+  --force, -f      Install: overwrite matching files. Update or sync: back up and replace managed conflicts
   --yes, -y        Use defaults in non-interactive installs
-  --dry-run        Print what would be copied without writing files
+  --dry-run        Print an install, update, or skills-only sync plan without writing files
   --json            Print status as one JSON object
   --help, -h       Show help
-  --version, -v    Show package version`);
+  --version, -v    Show package version
+
+Only \`npx @akash07k/create-ai-blueprint@latest update\` advances Blueprint versions.`);
 }
 
 function printGlobalHelp(): void {
   console.log(`blueprint
 
-Read AI Blueprint project status.
+Read AI Blueprint project status or restore generated adapter skills.
 
 This optional global command does not install or update Blueprint.
 
@@ -695,16 +807,22 @@ Usage:
   blueprint status
   blueprint status --json
   blueprint status --target ./my-app
+  blueprint sync
+  blueprint sync --dry-run
 
 Options:
   --target, -t     Project directory, defaults to the current directory
   --json            Print status as one JSON object
+  --dry-run         Print the generated-skill sync plan without writing files
+  --force, -f       Back up and replace conflicting generated skills
   --help, -h       Show help
   --version, -v    Show package version
 
 Install or update Blueprint with:
   npx @akash07k/create-ai-blueprint@latest
-  npx @akash07k/create-ai-blueprint@latest update`);
+  npx @akash07k/create-ai-blueprint@latest update
+
+Only \`npx @akash07k/create-ai-blueprint@latest update\` advances Blueprint versions.`);
 }
 
 function readPackageVersion(): string {
@@ -739,9 +857,12 @@ export {
   ADAPTER_PROMPT,
   getGlobalCliInstallCommand,
   getTemplateEntries,
+  formatCommandArgument,
   isGlobalCliInstallConfirmed,
   parseArgs,
   resolveAdapter,
   runCli,
   shouldOfferGlobalCliInstall
 };
+
+export type { CliRuntime };

@@ -21,6 +21,8 @@ import { readGitStatus } from "./git-status.js";
 import type { GitStatusSummary } from "./git-status.js";
 import { readProjectMetadata } from "./project-metadata.js";
 import type { ProjectAdapter } from "./project-metadata.js";
+import { inspectGeneratedSkillHealth } from "./update.js";
+import type { GeneratedSkillHealth } from "./update.js";
 
 type OverviewState = "current" | "missing" | "stale" | "unknown";
 type CompletionState = "blocked" | "needs_verification" | "ready";
@@ -76,6 +78,11 @@ interface HumanStatusOptions {
   color?: boolean;
 }
 
+interface ReadProjectStatusOptions {
+  packageVersion?: string;
+  syncSurface?: "global" | "package";
+}
+
 interface TextStyle {
   bold: (value: string) => string;
   brightCyan: (value: string) => string;
@@ -118,9 +125,13 @@ const OVERVIEW_PATH = path.join(
 );
 
 async function readProjectStatus(
-  startPath: string = process.cwd()
+  startPath: string = process.cwd(),
+  { packageVersion, syncSurface = "package" }: ReadProjectStatusOptions = {}
 ): Promise<ProjectStatus> {
   const metadata = await readProjectMetadata(startPath);
+  const skillHealth = metadata.warnings.some((warning) => warning.code === "invalid_manifest")
+    ? null
+    : await inspectGeneratedSkillHealth(metadata.project.root);
   const [buildPlan, currentWork, findings, git, overviewResult] = await Promise.all([
     readBuildPlan(metadata.project.root),
     readCurrentWork(metadata.project.root),
@@ -134,6 +145,7 @@ async function readProjectStatus(
     ...currentWork.warnings,
     ...findings.warnings,
     ...overviewResult.warnings,
+    ...findSkillHealthWarnings(skillHealth, packageVersion, syncSurface),
     ...findDrift(buildPlan, currentWork, git)
   ];
   const completion = selectCompletion(currentWork, findings, git);
@@ -162,6 +174,71 @@ async function readProjectStatus(
     nextAction,
     warnings
   };
+}
+
+function findSkillHealthWarnings(
+  health: GeneratedSkillHealth | null,
+  packageVersion: string | undefined,
+  syncSurface: ReadProjectStatusOptions["syncSurface"]
+): StatusWarning[] {
+  if (!health || !health.version) {
+    return [];
+  }
+
+  const packageMatches = packageVersion === undefined || packageVersion === health.version;
+  const syncCommand = (force = false): string => {
+    const command = packageVersion === health.version && syncSurface === "global"
+      ? "blueprint sync"
+      : `npx @akash07k/create-ai-blueprint@${health.version} sync`;
+
+    return force ? `${command} --force` : command;
+  };
+  const warnings: StatusWarning[] = [];
+
+  if (packageVersion !== undefined && !packageMatches) {
+    warnings.push({
+      code: "generated_skills_package_version_mismatch",
+      message:
+        `Blueprint generated skills are locked to version ${health.version}, ` +
+        `but the running package is ${packageVersion}. Run \`${syncCommand()}\`.`
+    });
+  }
+
+  if (health.legacy) {
+    warnings.push({
+      code: "legacy_generated_skills",
+      message: `Blueprint generated skills use a legacy manifest. Run \`${syncCommand()}\` to migrate the lock.`
+    });
+  }
+
+  if (health.missing.length > 0) {
+    warnings.push({
+      code: "missing_generated_skills",
+      message:
+        `${health.missing.length} generated Blueprint skill file${health.missing.length === 1 ? " is" : "s are"} missing. ` +
+        `Run \`${syncCommand()}\`.`
+    });
+  }
+
+  if (health.modified.length > 0) {
+    warnings.push({
+      code: "modified_generated_skills",
+      message:
+        `${health.modified.length} generated Blueprint skill file${health.modified.length === 1 ? " was" : "s were"} modified. ` +
+        `Run \`${syncCommand(true)}\` to back up and restore them.`
+    });
+  }
+
+  if (health.unsafe.length > 0) {
+    warnings.push({
+      code: "unsafe_generated_skill_paths",
+      message:
+        `${health.unsafe.length} generated Blueprint skill file${health.unsafe.length === 1 ? " has" : "s have"} an unsafe parent path. ` +
+        "Manually replace the symbolic-link or non-directory parent with a safe directory, then run sync. Do not use --force."
+    });
+  }
+
+  return warnings;
 }
 
 function formatHumanStatus(
@@ -749,6 +826,7 @@ export { formatHumanStatus, readProjectStatus, shouldUseColor };
 export type {
   CompletionState,
   HumanStatusOptions,
+  ReadProjectStatusOptions,
   OverviewState,
   ProjectStatus,
   StatusBuildPlan,
