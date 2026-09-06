@@ -58,6 +58,16 @@ test("dashboard serves live read-only project status on loopback", async (t) => 
   assert.match(page, /healthCount === 1 \? " issue" : " issues"/);
   assert.match(page, /git\.changedFiles \+ " changed"/);
   assert.match(page, /buildSummary = "Current: " \+ currentBuildItem\.id/);
+  assert.match(page, /work\.state === "active" && work\.buildPlanItem/);
+  assert.match(page, /find\(\(item\) => !item\.checked && item\.id === work\.buildPlanItem\)/);
+  assert.match(page, /const nextIndex = items\.findIndex\(\(item\) => !item\.checked\)/);
+  assert.match(page, /const isNext = index === nextIndex && !isCurrent/);
+  assert.match(page, /meta: isCurrent \? "current" : item\.checked \? "done" : isNext \? "next" : "planned"/);
+  assert.match(page, /JSON\.stringify\(\[targetIndex, targetItem\.id \|\| null, targetItem\.title\]\)/);
+  assert.match(page, /if \(targetKey === lastBuildPlanTargetKey\) return/);
+  assert.match(page, /const targetCenter = targetBounds\.top - listBounds\.top \+ list\.scrollTop/);
+  assert.match(page, /list\.scrollTop = Math\.max\(0, targetCenter - list\.clientHeight \/ 2\)/);
+  assert.doesNotMatch(page, /scrollIntoView/);
   assert.match(page, /activity\.mode === "continuous"/);
   assert.match(page, /activity\.status === "running"/);
   assert.match(page, /\? "Current run"/);
@@ -276,7 +286,7 @@ interface DashboardStatus {
       completed: number;
       remaining: number;
       total: number;
-      nextItem: { id: string; title: string } | null;
+      nextItem: { id: string | null; title: string } | null;
       splitParents: Array<{ id: string; title: string }>;
       items: Array<{ id: string | null; title: string; checked: boolean }>;
     };

@@ -653,6 +653,7 @@ const DASHBOARD_HTML: string = `<!doctype html>
   <script>
     const byId = (id) => document.getElementById(id);
     let lastPayload = "";
+    let lastBuildPlanTargetKey;
     let refreshing = false;
 
     function setPill(id, value, label = value) {
@@ -691,9 +692,22 @@ const DASHBOARD_HTML: string = `<!doctype html>
 
       item.append(mark, title, meta);
       list.append(item);
+      return item;
     }
 
-    function setBuildPlan(items, currentId, nextId) {
+    function centerBuildPlanTarget(list, target, targetKey) {
+      if (targetKey === lastBuildPlanTargetKey) return;
+      lastBuildPlanTargetKey = targetKey;
+      if (!target) return;
+
+      const listBounds = list.getBoundingClientRect();
+      const targetBounds = target.getBoundingClientRect();
+      const targetCenter = targetBounds.top - listBounds.top + list.scrollTop +
+        targetBounds.height / 2;
+      list.scrollTop = Math.max(0, targetCenter - list.clientHeight / 2);
+    }
+
+    function setBuildPlan(items, currentId) {
       const list = byId("build-list");
       list.replaceChildren();
 
@@ -702,18 +716,33 @@ const DASHBOARD_HTML: string = `<!doctype html>
         item.className = "empty";
         item.textContent = "No build-plan items are available.";
         list.append(item);
+        centerBuildPlanTarget(list, null, null);
         return;
       }
 
-      for (const item of items) {
-        const isCurrent = currentId && item.id === currentId;
-        addTimelineItem(list, {
+      const nextIndex = items.findIndex((item) => !item.checked);
+      const currentIndex = currentId
+        ? items.findIndex((item) => !item.checked && item.id === currentId)
+        : -1;
+      const targetIndex = currentIndex >= 0 ? currentIndex : nextIndex;
+      const targetItem = targetIndex >= 0 ? items[targetIndex] : null;
+      const targetKey = targetItem
+        ? JSON.stringify([targetIndex, targetItem.id || null, targetItem.title])
+        : null;
+      let target = null;
+      items.forEach((item, index) => {
+        const isCurrent = index === currentIndex;
+        const isNext = index === nextIndex && !isCurrent;
+        const node = addTimelineItem(list, {
           mark: item.checked ? "✓" : isCurrent ? "›" : "○",
           title: (item.id ? item.id + " - " : "") + item.title,
-          meta: isCurrent ? "current" : item.checked ? "done" : item.id === nextId ? "next" : "planned",
+          meta: isCurrent ? "current" : item.checked ? "done" : isNext ? "next" : "planned",
           className: item.checked ? "done" : isCurrent ? "current" : ""
         });
-      }
+        if (index === targetIndex) target = node;
+      });
+
+      centerBuildPlanTarget(list, target, target ? targetKey : null);
     }
 
     function setWorkSteps(work) {
@@ -858,18 +887,21 @@ const DASHBOARD_HTML: string = `<!doctype html>
       byId("build-progress").style.width = buildPercent + "%";
       byId("build-progressbar").setAttribute("aria-valuenow", String(Math.round(buildPercent)));
       byId("build-progressbar").setAttribute("aria-valuetext", build.completed + " of " + build.total + " build-plan items complete");
-      const currentBuildItem = work.buildPlanItem && build.items.find((item) => item.id === work.buildPlanItem);
+      const currentBuildItem = work.state === "active" && work.buildPlanItem
+        ? build.items.find((item) => !item.checked && item.id === work.buildPlanItem)
+        : null;
       let buildSummary = "Build plan is not ready.";
       if (currentBuildItem && !currentBuildItem.checked) {
         buildSummary = "Current: " + currentBuildItem.id + " - " + currentBuildItem.title;
       } else if (build.nextItem) {
-        buildSummary = "Next: " + build.nextItem.id + " - " + build.nextItem.title;
+        buildSummary = "Next: " + (build.nextItem.id ? build.nextItem.id + " - " : "") +
+          build.nextItem.title;
       } else if (build.total > 0) {
         buildSummary = "All planned work is checked.";
       }
       byId("build-next").textContent = buildSummary;
 
-      setBuildPlan(build.items, work.buildPlanItem, build.nextItem ? build.nextItem.id : null);
+      setBuildPlan(build.items, currentBuildItem ? currentBuildItem.id : null);
       setPill("work-state", work.state);
       byId("current-work-card").className = "card current-work " + work.state;
       byId("work-kicker").textContent = work.type
