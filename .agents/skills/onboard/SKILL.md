@@ -178,9 +178,13 @@ or value before changing other setup files.
 
 Keep project configuration deterministic. Ask before changing preferences and
 edit only values the user actually chose, such as branch prefixes, UI evidence,
-logic-test strictness, regular or Continuous quality gates, or Continuous Mode
-limits. Audit, independent-review, check, and try-guide gates default to `manual`; do not enable
-automatic gates unless the user chooses them. Never put
+logic-test strictness, regular or Continuous quality gates, review execution, or
+Continuous Mode limits. Independent review defaults to `when-sensitive` for
+regular and Continuous work, and its execution defaults to `automatic`. Audit,
+check, and try guide default to `manual`. Preserve these defaults unless the user
+chooses different policies. A `manual` independent-review gate disables
+automatic selection for that workflow without disabling explicit independent
+audits. Never put
 commands, product requirements, communication prose, secrets, or permission for
 commits, merges, pushes, deployments, publication, destructive actions, failed
 checks, or finding waivers into config.
@@ -217,6 +221,11 @@ instead of guessing, such as:
 - whether `/check` should require browser evidence for UI work
 - whether audit, independent review, check, or try guides should stay manual, run only for their
   documented conditional case, or run for every regular or Continuous work item
+- whether a selected independent review should use the default automatic
+  isolated reviewer or `review.independentExecution: "manual"` for a
+  fresh-session handoff. Explain that automatic execution uses a fresh isolated
+  reviewer only when the active adapter can expose its exact identity and model,
+  and otherwise stops with the manual handoff
 
 If no changes are needed, say so.
 

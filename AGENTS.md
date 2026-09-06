@@ -45,10 +45,27 @@ a finding. Those approval and safety boundaries are not configurable.
 `qualityGates.regular` controls automatic audit, independent-review, check, and
 try-guide behavior for the normal workflow and Autopilot.
 `qualityGates.continuous` controls the same per-feature gates for Continuous
-Mode. Every gate defaults to `manual`, so the named skill runs only when
-explicitly requested. The conditional modes are `when-sensitive` for audit and
-independent review, `when-behavioral` for check, and `when-user-facing` for try
-guides. `always` runs the gate for every work item in that workflow.
+Mode. Independent review defaults to `when-sensitive` in both workflows, while
+audit, check, and try guide default to `manual`. Sensitive or unusually broad
+work therefore selects independent review automatically; ordinary small work
+does not. Setting a workflow's independent review to `manual` disables that
+automatic selection, while an explicit `/audit independent current` remains
+available. The other conditional modes are `when-sensitive` for audit,
+`when-behavioral` for check, and `when-user-facing` for try guides. `always`
+runs the gate for every work item in that workflow.
+
+`review.independentExecution` controls how a selected independent-review gate
+runs. Its default, `automatic`, uses a fresh isolated reviewer child when the
+active adapter can prove isolation, exact reviewer identity and model, and
+completion. Otherwise it preserves the request and falls back to the manual
+handoff. This setting changes execution only; the quality-gate policy still
+decides whether review is selected.
+The automatic path spawns a generic child through the current runtime and gives
+it the installed project-local Audit skill and review contract. It never requires
+or discovers global agent roles, skills, prompts, or TraversyFlow components.
+New review requests record requested execution and completed receipts record
+actual execution. Manual uses `fresh session`; automatic uses `fresh subagent`;
+an explicit automatic fallback records actual manual with `fresh session`.
 
 New projects default to one review packet after all small implementation steps
 (`workflow.stepReview: "feature"`) with step checkpoint commits disabled. This
@@ -104,7 +121,7 @@ Core skills:
 - `implement` - build the current spec one small, reviewed step at a time
 - `check` - prove the current spec against the running app
 - `try` - read-only manual review guide: where to go, what to click, what to expect
-- `audit` - branch-aware or full-project review across all concerns or a focused quality, security, performance, or tests lens; `audit independent current` prepares an immutable checkpoint handoff for a selected fresh reviewer session; records findings in `blueprint/context/findings.md` and independent receipts in `blueprint/context/review.md`, where blocking findings or stale review state stop `complete`
+- `audit` - branch-aware or full-project review across all concerns or a focused quality, security, performance, or tests lens; `audit independent current` prepares an immutable checkpoint for a fresh reviewer session or configured isolated reviewer child; records findings in `blueprint/context/findings.md` and independent receipts in `blueprint/context/review.md`, where blocking findings or stale review state stop `complete`
 - `rollback` - plan a safe reversal of a completed feature from its archive and exact git commit, with later-dependency review before code changes
 - `complete` - run the final safety pass, log features, fixes, or rollbacks under `blueprint/history/`, then merge with approval
 - `release` - optional Render or Vercel deployment readiness, local config, env review, and smoke-test planning

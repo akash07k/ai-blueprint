@@ -11,20 +11,36 @@ import {
   readProjectConfig
 } from "../lib/project-config.js";
 
-test("default config keeps every quality gate manual", () => {
+test("default config reviews sensitive work automatically", () => {
   const defaults = createDefaultProjectConfig();
-  const manualGates = {
+  const defaultGates = {
     audit: "manual",
-    independentReview: "manual",
+    independentReview: "when-sensitive",
     check: "manual",
     tryGuide: "manual"
   };
 
-  assert.deepEqual(defaults.qualityGates.regular, manualGates);
-  assert.deepEqual(defaults.qualityGates.continuous, manualGates);
+  assert.deepEqual(defaults.qualityGates.regular, defaultGates);
+  assert.deepEqual(defaults.qualityGates.continuous, defaultGates);
   assert.equal(defaults.workflow.stepReview, "feature");
   assert.equal(defaults.workflow.checkpointCommits, "disabled");
+  assert.equal(defaults.review.independentExecution, "automatic");
   assert.equal(defaults.continuous.finalIntegrationAudit, false);
+});
+
+test("manual independent review policy and execution remain valid overrides", () => {
+  const config = parseProjectConfig({
+    schemaVersion: 1,
+    review: { independentExecution: "manual" },
+    qualityGates: {
+      regular: { independentReview: "manual" },
+      continuous: { independentReview: "manual" }
+    }
+  });
+
+  assert.equal(config.review.independentExecution, "manual");
+  assert.equal(config.qualityGates.regular.independentReview, "manual");
+  assert.equal(config.qualityGates.continuous.independentReview, "manual");
 });
 
 test("readProjectConfig returns defaults when config is missing", async (t) => {
@@ -55,6 +71,9 @@ test("readProjectConfig merges partial project values over defaults", async (t) 
         tryGuide: "when-user-facing"
       }
     },
+    review: {
+      independentExecution: "automatic"
+    },
     continuous: {
       maxFeatures: 4
     }
@@ -65,6 +84,7 @@ test("readProjectConfig merges partial project values over defaults", async (t) 
   assert.equal(result.state, "project");
   assert.equal(result.values.git.featureBranchPrefix, "feat/");
   assert.equal(result.values.git.fixBranchPrefix, "fix/");
+  assert.equal(result.values.review.independentExecution, "automatic");
   assert.equal(result.values.qualityGates.regular.audit, "when-sensitive");
   assert.equal(result.values.qualityGates.regular.independentReview, "always");
   assert.equal(result.values.qualityGates.regular.check, "always");
@@ -72,6 +92,10 @@ test("readProjectConfig merges partial project values over defaults", async (t) 
   assert.equal(
     result.values.qualityGates.continuous.tryGuide,
     "when-user-facing"
+  );
+  assert.equal(
+    result.values.qualityGates.continuous.independentReview,
+    "when-sensitive"
   );
   assert.equal(result.values.continuous.maxFeatures, 4);
   assert.equal(result.values.continuous.maxRepairAttempts, 2);
@@ -144,6 +168,22 @@ test("readProjectConfig rejects unknown and invalid values", async (t) => {
       }
     }),
     /qualityGates\.regular\.independentReview must be one of/
+  );
+  assert.throws(
+    () => parseProjectConfig({
+      schemaVersion: 1,
+      qualityGates: {
+        regular: { independentReview: "off" }
+      }
+    }),
+    /qualityGates\.regular\.independentReview must be one of/
+  );
+  assert.throws(
+    () => parseProjectConfig({
+      schemaVersion: 1,
+      review: { independentExecution: "background" }
+    }),
+    /review\.independentExecution must be one of/
   );
 });
 

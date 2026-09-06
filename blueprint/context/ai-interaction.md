@@ -82,8 +82,21 @@ when you just want something done.
    before closing a feature or after a larger automated run. It checks for
    duplication, dead code, missing tests for logic, standards drift, and
    maintainability risks. Run `/audit independent current` when a selected fresh
-   reviewer session should inspect an approved checkpoint and leave a
-   staleness-checked receipt. Fixes still happen through `/implement` or `/fix`.
+   reviewer should inspect an approved checkpoint and leave a staleness-checked
+   receipt. Regular and Continuous independent review default to
+   `when-sensitive`, so sensitive or unusually broad work selects this gate
+   automatically while ordinary small features do not. A `manual` gate policy
+   disables automatic selection, but the explicit command remains available.
+   `review.independentExecution` defaults to an automatic isolated reviewer when
+   the adapter supports it; set it to `manual` for the fresh-session handoff.
+   Automatic review runs after final Verify, required Check, and verified spec,
+   before the final packet and `/complete`. Fixes still happen through
+   `/implement` or `/fix`. The automatic path starts a generic child through the
+   current runtime and instructs it from the project-local Audit skill and review
+   contract. It never depends on a global role, skill, prompt, or TraversyFlow.
+   The request records requested execution and the receipt records actual
+   execution, including an explicit manual fallback when automatic review is not
+   available.
 8. **Iterate** - If it doesn't work or needs changes, re-prompt or hand-edit and
    re-test; repeat until it works, before moving on.
 9. **Checkpoint (optional)** - checkpoint commits are disabled by default. When

@@ -40,6 +40,8 @@ Read `blueprint/context/review.md` when present. A missing file on an older
 install means no independent review has been requested. A pending,
 changes-requested, malformed, or stale record is always a blocker because the
 user already initiated that gate, even when its configured policy is `manual`.
+Complete must route a pending or missing required review through the configured
+execution flow below rather than treating the manual handoff as unconditional.
 
 ## Configured regular quality gates
 
@@ -65,13 +67,38 @@ Use `qualityGates.regular` for this work item:
   `always` generates one for every work item.
 
 Apply automatic gates in this order: `/check`, review, then `/try`. When
-independent review is selected, run `/audit independent current`, stop at its
-handoff, and resume Complete only after a fresh reviewer writes a current
-passing receipt. Otherwise run `/audit current` when Audit is selected.
+independent review is selected, follow the independent execution flow below and
+continue only after a fresh reviewer writes a current passing receipt. Otherwise
+run `/audit current` when Audit is selected.
 Reuse adequate evidence produced during the current work item instead of
 repeating it. A required gate that cannot run is a blocker. `/try` only generates
 instructions for human review; never claim the user performed them. P0 and P1
 finding blockers remain enforced regardless of these settings.
+
+### Independent review execution
+
+After final Verify and required Check pass, set the active spec to `verified`.
+If a selected or previously initiated independent review does not already have a
+current passing receipt:
+
+1. Use an existing current pending request and its immutable target when one is
+   present. Otherwise show the exact product, test, and verified-spec candidate
+   for the immutable review checkpoint. Obtain explicit commit approval under
+   the normal Git rules, then create or use that clean checkpoint. Configuration,
+   including `review.independentExecution: "automatic"`, never grants permission
+   to commit. A pending request without `Requested execution` is legacy and
+   manual-only; never add execution fields or run a subagent against it.
+2. Prepare Phase A of `/audit independent current` when no current request
+   exists. Record `Requested execution` from `review.independentExecution`.
+3. For requested `automatic`, start the generic isolated current-runtime child
+   from the installed project-local Audit skill, wait, and validate the normal
+   receipt. Freeze parent product, test, spec, and config changes while it runs.
+4. For requested `manual`, or when automatic isolation, identity, model, or
+   completion is unavailable, preserve the pending request, set activity to
+   `ready`, and stop with the manual fresh-session handoff.
+5. Continue Complete only with a current passing receipt whose requested and
+   actual execution fields match the allowed review contract. Never self-review
+   or silently skip the gate.
 
 ## Step 0 - final safety pass
 
@@ -180,9 +207,10 @@ same way if the file is missing (an older install):
 a `## Independent review` section to the archive file with the receipt fields,
 commands, safe evidence references, findings, and remaining risk from
 `blueprint/context/review.md`. Preserve the full target and base SHAs, spec
-hash, base ref, builder adapter and model, requested reviewer and model, actual
-reviewer adapter and model, Check result, fresh-session declaration, and review
-time. Do not archive a stale, pending, changes-requested, or malformed record.
+hash, base ref, builder adapter and model, requested reviewer, model, and
+execution, actual reviewer adapter, model, and execution, Check result,
+fresh-context declaration, and review time. Do not archive a stale, pending,
+changes-requested, or malformed record.
 
 Then reset `blueprint/context/review.md` to exactly this stub, creating it when
 an older installation does not have it:
@@ -191,7 +219,7 @@ an older installation does not have it:
 
     > **Generated file.** Holds the active independent-review request or latest
     > receipt for the current work item. `/audit independent current` prepares a
-    > handoff against an approved checkpoint, a fresh reviewer session completes it,
+    > handoff against an approved checkpoint, a fresh reviewer context completes it,
     > and `/complete` refuses stale, pending, or changes-requested review state.
 
     _No independent review requested. Run `/audit independent current` to prepare one._

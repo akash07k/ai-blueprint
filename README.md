@@ -209,18 +209,35 @@ Blueprint separates several kinds of proof that are easy to blur together:
 - **Check:** observable proof that the current work satisfies its spec.
 - **Audit:** branch-aware review across quality, security, performance, and
   tests, with focused lenses when needed.
-- **Independent Audit:** a fresh reviewer session inspects an approved
-  checkpoint using the selected installed adapter and model.
+- **Independent Audit:** a fresh reviewer session or configured isolated
+  reviewer child inspects an approved checkpoint using an exact adapter and model.
 - **Try guide:** a read-only manual walkthrough for human review.
 
 Independent review records the target, permitted base, spec hash, requested and
 actual reviewer metadata, Check result, commands, evidence, findings, and
 remaining risk. Relevant later changes make the receipt stale. Adapter, model,
-and fresh-session identity remain declared metadata, not cryptographic proof.
+and fresh-context identity remain declared metadata, not cryptographic proof.
 
-All quality gates default to manual. Projects can make them conditional or
-required through `blueprint/config.json` without granting permission to merge,
-push, deploy, publish, or waive findings.
+Independent review defaults to `when-sensitive` for regular and Continuous
+work. Audit, check, and try guide default to `manual`. Sensitive or unusually
+broad work therefore receives independent review automatically, while ordinary
+small features do not. Set a workflow's independent review policy to `manual`
+to disable automatic selection. An explicit `/audit independent current` is
+still available and uses the configured execution method. Configuration never
+grants permission to merge, push, deploy, publish, or waive findings.
+
+The gate decides when independent review is required. The separate
+`review.independentExecution` setting decides how it runs and defaults to
+`automatic`, which starts an isolated reviewer when the active adapter can prove
+fresh context and exact reviewer metadata. Unsupported automatic execution stops
+with the manual handoff instead of skipping review. Set execution to `manual` to
+always prepare the fresh-session handoff.
+The automatic reviewer is a generic child of the current runtime, instructed
+only by the installed project's Audit skill and review contract. No global agent
+role, skill, prompt, or TraversyFlow installation is required or discovered.
+New requests bind the selected execution mode and receipts bind what actually
+ran. This prevents an unbound subagent claim from satisfying the gate while
+preserving older fresh-session receipts.
 
 Read [Code Quality](https://ai-blueprint.dev/docs/code-quality/),
 [Audit](https://ai-blueprint.dev/docs/commands/audit/), and

@@ -36,7 +36,7 @@ const reviewStub = `# Independent Review
 
 > **Generated file.** Holds the active independent-review request or latest
 > receipt for the current work item. \`/audit independent current\` prepares a
-> handoff against an approved checkpoint, a fresh reviewer session completes it,
+> handoff against an approved checkpoint, a fresh reviewer context completes it,
 > and \`/complete\` refuses stale, pending, or changes-requested review state.
 
 _No independent review requested. Run \`/audit independent current\` to prepare one._
@@ -399,7 +399,9 @@ async function validateVerificationContract(): Promise<void> {
       [
         "markers normalized to `- [ ]`",
         "matching legacy exact-byte hash",
-        "Do not use filesystem timestamps"
+        "Do not use filesystem timestamps",
+        "independent review defaults to `when-sensitive`",
+        "execution defaults to `automatic`"
       ]
     ],
     [
@@ -421,7 +423,14 @@ async function validateVerificationContract(): Promise<void> {
         "Use the exact `**Branch:**` value",
         "Walk me through the implementation.",
         "available with either `workflow.stepReview` value",
-        "read-only code tour"
+        "read-only code tour",
+        "review.independentExecution",
+        "After final Verify and required Check pass, set the active spec to `verified`",
+        "Continue to the final packet only with a current passing receipt",
+        "never grants commit permission",
+        "sole exception is exactly one immutable independent-review checkpoint",
+        "receiving current explicit commit approval",
+        "Treat an existing request without `Requested execution` as legacy manual-only"
       ]
     ],
     [
@@ -449,9 +458,17 @@ async function validateVerificationContract(): Promise<void> {
     [
       ".agents/skills/audit/SKILL.md",
       [
-        "`/audit independent current` is a two-session workflow",
+        "`/audit independent current` is a two-context workflow",
         "Never let a builder complete its own independent request",
-        "A stale receipt is no receipt"
+        "A stale receipt is no receipt",
+        "Record `fresh subagent` as its reviewer context",
+        "may write only `blueprint/context/findings.md` and `blueprint/context/review.md`",
+        "Spawn a generic fresh isolated child through the current runtime",
+        "Do not discover, select, or depend on a globally installed role, skill, prompt",
+        "read the project-local Audit skill",
+        "pending request without `Requested execution` is legacy and manual only",
+        "omit `Actual execution`",
+        "gate value disables only\nautomatic selection by the workflow"
       ]
     ],
     [
@@ -459,9 +476,17 @@ async function validateVerificationContract(): Promise<void> {
       [
         "**Target commit:** <full 40-character checkpoint SHA>",
         "**Base ref:** <local branch or remote-tracking ref used for the merge base>",
-        "**Reviewer context:** fresh session",
+        "**Reviewer context:** <fresh session or fresh subagent>",
+        "**Requested execution:** <manual or automatic>",
+        "**Actual execution:** <manual or automatic>",
+        "a fresh reviewer context completes it",
         "**Check result:** <passed, failed, unavailable, or not-required>",
-        "cannot cryptographically prove"
+        "cannot cryptographically prove",
+        "generic current-runtime child",
+        "never depends on a global role",
+        "Legacy receipts with neither execution field",
+        "pending request without `Requested execution` is a legacy manual request",
+        "Never auto-upgrade it or send it to a subagent"
       ]
     ],
     [
@@ -475,7 +500,12 @@ async function validateVerificationContract(): Promise<void> {
         "checkbox-normalized hash contract",
         "migrates older exact-byte fingerprints",
         "replace `blueprint/context/current-feature.md` with the canonical stub below",
-        "Never merge with a required or explicitly initiated independent review"
+        "Never merge with a required or explicitly initiated independent review",
+        "### Independent review execution",
+        "Obtain explicit commit approval",
+        "For requested `automatic`",
+        "Continue Complete only with a current passing receipt",
+        "pending request without `Requested execution` is legacy"
       ]
     ],
     [
@@ -502,7 +532,10 @@ async function validateVerificationContract(): Promise<void> {
         "missing `Verify` command or GitHub workflow is informational",
         "At or above 20,000 bytes, call it oversized",
         "lets skills load the overview, active",
-        "Claude uses legacy direct context imports"
+        "Claude uses legacy direct context imports",
+        "review.independentExecution",
+        "Independent review defaults to `when-sensitive`",
+        "defaults to\n     `automatic`"
       ]
     ],
     [
@@ -510,7 +543,11 @@ async function validateVerificationContract(): Promise<void> {
       [
         "exact `Verify` command from `AGENTS.md`",
         "combines `/feature` or `/fix` with `/implement`",
-        "option to walk through the completed code"
+        "option to walk through the completed code",
+        "automatic isolated reviewer",
+        "existing configured checkpoint authority",
+        "The request records `Requested execution`",
+        "pending request without `Requested execution` is legacy manual-only"
       ]
     ],
     [
@@ -518,15 +555,41 @@ async function validateVerificationContract(): Promise<void> {
       [
         "Run the exact documented `Verify` command",
         "one clean local main commit per completed feature",
-        "Never push the default branch"
+        "Never push the default branch",
+        "required immutable independent-review checkpoints",
+        "automatic capability cannot prove isolation",
+        "The request records `Requested execution`",
+        "pending request without `Requested execution` is legacy manual-only"
       ]
     ],
-    ["AGENTS.md", ["## Automatic verification", "`contents: read`"]],
+    [
+      ".agents/skills/onboard/SKILL.md",
+      [
+        "Independent review defaults to `when-sensitive`",
+        "execution defaults to `automatic`",
+        "disables\nautomatic selection for that workflow without disabling explicit independent\naudits"
+      ]
+    ],
+    [
+      "AGENTS.md",
+      [
+        "## Automatic verification",
+        "`contents: read`",
+        "spawns a generic child through the current runtime",
+        "never requires or discovers global agent roles",
+        "Independent review defaults to `when-sensitive`",
+        "Its default, `automatic`"
+      ]
+    ],
     [
       "README.md",
       [
         "## Automatic GitHub checks",
-        "**Verify is the recipe.**"
+        "**Verify is the recipe.**",
+        "generic child of the current runtime",
+        "No global agent role",
+        "Independent review defaults to `when-sensitive`",
+        "defaults to\n`automatic`"
       ]
     ],
     [
@@ -539,7 +602,9 @@ async function validateVerificationContract(): Promise<void> {
         "run that exact command as the final automated gate",
         "Continuous Mode also exists only as an explicit opt-in command",
         "The initial Overview baseline also requires explicit approval",
-        "the same approval can finalize the local baseline"
+        "the same approval can finalize the local baseline",
+        "generic child through the current runtime",
+        "never depends on a global role"
       ]
     ],
     [
@@ -547,7 +612,9 @@ async function validateVerificationContract(): Promise<void> {
       [
         "optional `/ci` or `$ci` skill",
         "offers a reviewed local commit for the Blueprint setup and plans",
-        "Claude Code and Codex selected by default"
+        "Claude Code and Codex selected by default",
+        "generic child of the current runtime",
+        "does not require or discover a global agent role"
       ]
     ]
   ]);

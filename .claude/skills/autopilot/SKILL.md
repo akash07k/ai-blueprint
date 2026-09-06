@@ -207,14 +207,29 @@ Apply `qualityGates.regular.independentReview` before a same-session audit:
   side effects, security boundaries, or unusually broad changes.
 - `always` requires it for every work item.
 
+The selected review runs after all implementation steps, final Verify, required
+Check, and the verified spec, before the final review packet and `/complete`.
+`review.independentExecution` chooses the manual fresh-session handoff or an
+automatic isolated reviewer; it does not change when the gate is selected.
+
 When selected, do not review the builder's work in this session. Ensure all work
 is in an approved clean checkpoint, then follow Phase A of
-`/audit independent current`: detect installed adapters, ask for the reviewer
-adapter and model, write the pending request, set activity to `ready`, and stop
-with the handoff. On resume, continue only when a fresh reviewer wrote a current
-`passed` receipt. Repair `changes-requested` P0/P1 findings within the normal
-scope and attempt limit, then obtain a new checkpoint and prepare a new handoff.
-A passing independent receipt satisfies the configured Audit gate.
+`/audit independent current`. With automatic execution, spawn and wait for the
+isolated reviewer, then validate its normal receipt. With manual execution, stop
+with the handoff. Autopilot may use its existing configured checkpoint authority
+when checkpoint commits are enabled; otherwise show the exact review-checkpoint
+candidate and ask before committing. On resume, continue only when a fresh
+reviewer wrote a current `passed` receipt. Repair `changes-requested` P0/P1
+findings within the normal scope and attempt limit, then obtain a new checkpoint
+and prepare a new review. A passing independent receipt satisfies the configured
+Audit gate.
+
+The request records `Requested execution`; the receipt records `Actual
+execution`. Require the execution and reviewer-context pairing defined by the
+project-local review contract, including actual manual plus `fresh session` when
+an automatic request explicitly falls back.
+On resume, a pending request without `Requested execution` is legacy manual-only.
+Never add execution fields or run a subagent against it.
 
 Apply `qualityGates.regular.audit`:
 

@@ -39,6 +39,7 @@ test("dashboard serves live read-only project status on loopback", async (t) => 
   assert.match(page, /id="onboarding">-<\/span>/);
   assert.match(page, /id="regular-gates">-<\/span>/);
   assert.match(page, /id="continuous-gates">-<\/span>/);
+  assert.match(page, /id="review-execution">-<\/span>/);
   assert.match(page, /id="health-list" aria-live="polite"/);
   assert.match(page, /id="build-list" tabindex="0" aria-label="Build plan items"/);
   assert.match(page, /id="build-progressbar" role="progressbar"/);
@@ -75,6 +76,15 @@ test("dashboard serves live read-only project status on loopback", async (t) => 
   const firstStatus = await readStatus(dashboard.url);
   assert.equal(firstStatus.project.name, "dashboard-project");
   assert.equal(firstStatus.configuration.state, "defaults");
+  assert.equal(firstStatus.configuration.values.review.independentExecution, "automatic");
+  assert.equal(
+    firstStatus.configuration.values.qualityGates.regular.independentReview,
+    "when-sensitive"
+  );
+  assert.equal(
+    firstStatus.configuration.values.qualityGates.continuous.independentReview,
+    "when-sensitive"
+  );
   assert.equal(firstStatus.onboarding.state, "complete");
   assert.deepEqual(firstStatus.activity, {
     state: "recorded",
@@ -258,6 +268,7 @@ interface DashboardStatus {
         regular: { audit: string; independentReview: string; check: string; tryGuide: string };
         continuous: { audit: string; independentReview: string; check: string; tryGuide: string };
       };
+      review: { independentExecution: string };
     };
   };
   plans: {

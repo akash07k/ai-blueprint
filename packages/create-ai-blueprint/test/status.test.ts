@@ -69,17 +69,18 @@ test("readProjectStatus reports active work, findings, Git, and the next step", 
   assert.deepEqual(status.configuration.values.qualityGates, {
     regular: {
       audit: "manual",
-      independentReview: "manual",
+      independentReview: "when-sensitive",
       check: "manual",
       tryGuide: "manual"
     },
     continuous: {
       audit: "manual",
-      independentReview: "manual",
+      independentReview: "when-sensitive",
       check: "manual",
       tryGuide: "manual"
     }
   });
+  assert.equal(status.configuration.values.review.independentExecution, "automatic");
   assert.equal(status.activity.state, "idle");
   assert.deepEqual(status.plans.build, {
     completed: 1,
@@ -163,6 +164,7 @@ test("readProjectStatus exposes valid project config", async (t) => {
       qualityGates: {
         continuous: { audit: "always" }
       },
+      review: { independentExecution: "automatic" },
       continuous: { maxFeatures: 3 }
     }, null, 2)}\n`
   );
@@ -175,6 +177,8 @@ test("readProjectStatus exposes valid project config", async (t) => {
     "always"
   );
   assert.equal(status.configuration.values.continuous.maxFeatures, 3);
+  assert.equal(status.configuration.values.review.independentExecution, "automatic");
+  assert.match(formatHumanStatus(status), /Review exec\.\s+automatic/);
   assert.doesNotMatch(formatHumanStatus(status), /invalid, using defaults/);
 });
 
@@ -562,6 +566,52 @@ test("readProjectStatus verifies work before preparing required independent revi
   });
 });
 
+test("readProjectStatus describes an automatic pending review as a fresh context", async (t) => {
+  const projectRoot = await createProject(t, {
+    currentWork: `# Feature: Status command
+
+**From build-plan:** feature 2
+**Status:** verified
+
+## Build steps
+
+- [x] **Step 1 - Print status** - format the result.
+`,
+    findings: emptyFindings(),
+    branch: "feature/status-command"
+  });
+  await fs.writeFile(
+    path.join(projectRoot, "blueprint", "context", "review.md"),
+    `# Independent Review
+
+**Status:** pending
+**Target commit:** ${"1".repeat(40)}
+**Base commit:** ${"2".repeat(40)}
+**Base ref:** main
+**Spec hash:** ${"3".repeat(64)}
+**Prepared by:** codex
+**Builder model:** gpt-builder
+**Requested reviewer:** codex
+**Requested model:** gpt-reviewer
+**Requested execution:** automatic
+**Requested at:** 2026-09-06T12:00:00Z
+**Workflow:** regular
+**Check required:** no
+`
+  );
+
+  const status = await readProjectStatus(projectRoot);
+  const output = formatHumanStatus(status);
+
+  assert.equal(status.review.requestedExecution, "automatic");
+  assert.deepEqual(status.nextAction, {
+    command: "/audit independent current",
+    reason: "Complete the pending review from the selected fresh reviewer context."
+  });
+  assert.match(output, /Review\s+pending, stale, codex\/gpt-reviewer, automatic/);
+  assert.doesNotMatch(output, /fresh reviewer session/);
+});
+
 test("readProjectStatus uses the Continuous independent review policy", async (t) => {
   const now = new Date().toISOString();
   const projectRoot = await createProject(t, {
@@ -727,13 +777,14 @@ test("formatHumanStatus prints a scannable orientation", async (t) => {
   assert.match(output, /^  Build plan    1\/2 complete$/m);
   assert.match(output, /^  Work          none$/m);
   assert.match(output, /^  Config        built-in defaults$/m);
+  assert.match(output, /^  Review exec\.  automatic$/m);
   assert.match(
     output,
-    /^  Regular gates audit manual, independent review manual, check manual, try guide manual$/m
+    /^  Regular gates audit manual, independent review when-sensitive, check manual, try guide manual$/m
   );
   assert.match(
     output,
-    /^  Cont\. gates   audit manual, independent review manual, check manual, try guide manual$/m
+    /^  Cont\. gates   audit manual, independent review when-sensitive, check manual, try guide manual$/m
   );
   assert.match(output, /^  Findings      none$/m);
   assert.match(output, /^  Review        none$/m);

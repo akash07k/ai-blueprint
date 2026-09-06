@@ -162,13 +162,32 @@ conflict protection. The `blueprint/.state/manifest.json` file records the
 installed version and hashes of managed files.
 
 `blueprint/config.json` is user-owned project policy. It controls review cadence,
-checkpoint availability, branch prefixes, verification strictness, regular and
+checkpoint availability, branch prefixes, verification strictness, independent-review execution, regular and
 Continuous quality gates, and Continuous Mode limits. Audit, independent-review,
-check, and try-guide gates all default to manual. A missing file uses built-in defaults;
-an invalid file is reported by status and blocks mutating workflow skills until
-`/doctor` identifies the repair. Configuration never grants permission to
+check, and try-guide gates use built-in defaults. Independent review defaults to
+`when-sensitive` for regular and Continuous work, while audit, check, and try
+guide default to `manual`. Sensitive or unusually broad work is selected for
+independent review, while ordinary small features are not. Setting a workflow's
+independent review policy to `manual` disables automatic selection; an explicit
+`/audit independent current` still uses the configured execution method. A
+missing file uses built-in defaults; an invalid file is reported by status and
+blocks mutating workflow skills until `/doctor` identifies the repair.
+Configuration never grants permission to
 commit, merge, push, deploy, publish, or take destructive action. Only an
 explicit `/continuous` or `$continuous` request starts the multi-feature loop.
+
+`review.independentExecution` defaults to `automatic`, which uses a fresh
+isolated reviewer child when a selected independent-review gate runs
+and the active adapter can expose its exact reviewer identity and model. When it
+cannot, Blueprint preserves the request and stops with the manual fresh-session
+handoff. Set it to `manual` to always use that handoff. The setting changes
+execution only; `qualityGates` still decides when independent review is selected.
+The automatic reviewer is a generic child of the current runtime and reads the
+installed project's Audit skill and review contract. Blueprint does not require
+or discover a global agent role, skill, prompt, or TraversyFlow component.
+New requests record requested execution and completed receipts record actual
+execution. Automatic-to-manual fallback is explicit, and legacy receipts remain
+compatible only as fresh-session manual reviews.
 
 ## Context efficiency
 

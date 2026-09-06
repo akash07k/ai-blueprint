@@ -84,10 +84,15 @@ Optional review mode:
 
 ## Independent mode
 
-`/audit independent current` is a two-session workflow. The builder session
-prepares a request. The selected fresh reviewer session runs the same command
-to complete it. Blueprint verifies the exact target and later staleness. The
-adapter, model, and fresh-session identity remain declared metadata.
+`/audit independent current` is a two-context workflow. The builder prepares a
+request. With `review.independentExecution: "manual"`, the selected fresh
+reviewer session runs the same command to complete it. With `automatic`, the
+current adapter may start a fresh isolated reviewer subagent after preparing the
+request. Blueprint verifies the exact target and later staleness. The adapter,
+model, and fresh-context identity remain declared metadata.
+An explicit invocation uses this execution setting even when the active
+workflow's `independentReview` gate is `manual`; that gate value disables only
+automatic selection by the workflow.
 
 Read `reference/independent-review.md` before either phase.
 
@@ -95,6 +100,11 @@ Read `reference/independent-review.md` before either phase.
 
 Use this phase when `blueprint/context/review.md` has no current `pending`
 request for `HEAD` and the current spec hash.
+
+A current pending request without `Requested execution` is legacy and manual
+only. Never add execution fields to it or run a subagent against it. Stop with
+the fresh-session handoff; Phase B must omit `Actual execution` so the legacy
+request and receipt keep both execution fields absent.
 
 1. Require an active spec with every build step checked and status `verified`, a
    non-default work branch, a reliable merge base, and a clean working tree.
@@ -109,14 +119,24 @@ request for `HEAD` and the current spec hash.
    For older installs, detect `.agents/skills` as `codex` and `.claude/skills`
    as `claude`. These files prove project support, not that the external runtime
    is installed or authenticated.
-3. Ask which detected adapter and available model should review. Recommend an
-   equal-or-stronger coding model, a different model family when practical, and
-   high reasoning for sensitive work. Offer a fresh session in the current
-   adapter as the fallback. Do not invent available models or offer an adapter
-   that is not installed in the project.
+3. Resolve the review executor from `review.independentExecution`:
+   - For `manual`, ask which detected adapter and available model should review.
+     Recommend an equal-or-stronger coding model, a different model family when
+     practical, and high reasoning for sensitive work. Offer a fresh session in
+     the current adapter as the fallback. Do not invent available models or
+     offer an adapter that is not installed in the project.
+   - For `automatic`, use only a live child-agent capability in the current
+     adapter that can start with no builder transcript, disclose the exact
+     reviewer adapter and model, and wait for completion. Spawn a generic fresh
+     isolated child through the current runtime. Do not discover, select, or
+     depend on a globally installed role, skill, prompt, or another workflow
+     such as TraversyFlow. If the runtime cannot start that generic child from
+     project-local instructions, or capability, isolation, identity, model, or
+     completion cannot be confirmed, use the manual path.
 4. Record the full target SHA, full merge-base SHA, the exact local base ref
    used to calculate it, exact spec SHA-256, current adapter and model,
-   requested reviewer adapter and model, workflow, and
+   requested reviewer adapter and model, requested execution from
+   `review.independentExecution`, workflow, and
    whether the configured Check gate is required. Write the pending template
    exactly. Copy the full model identifier exposed by the active runtime or
    session metadata (for example, `gpt-5.6-sol`), never a generic family label
@@ -124,14 +144,31 @@ request for `HEAD` and the current spec hash.
    `unknown (runtime did not expose exact model)` instead of guessing. When the
    reviewer runtime cannot select a specific model before opening the session,
    record the exact runtime-default sentinel from the reference contract.
-5. Set dashboard activity to `ready` and give the exact handoff command for the
-   selected adapter. Claude Code uses `/audit independent current`; Codex uses
-   `$audit independent current`; Copilot and OpenCode receive the equivalent
-   plain-language instruction to run the Audit skill in independent mode. Tell
-   the user to open a fresh session with only the handoff, not the builder chat.
+5. Execute the configured path:
+   - For `manual`, set dashboard activity to `ready` and give the exact handoff
+     command for the selected adapter. Claude Code uses
+     `/audit independent current`; Codex uses `$audit independent current`;
+     Copilot and OpenCode receive the equivalent plain-language instruction.
+     Tell the user to open a fresh session with only the handoff, not the builder
+     chat.
+   - For `automatic`, freeze all parent product, test, spec, and config changes.
+     Start one generic isolated child without the builder transcript. Instruct
+     it to read the project-local Audit skill and
+     `audit/reference/independent-review.md` from the current adapter tree, then
+     execute Phase B against the prepared request. All review instructions come
+     from that installed Blueprint project. The reviewer may write only
+     `blueprint/context/findings.md` and `blueprint/context/review.md`; it must
+     not repair code, change the spec, commit, or perform external actions. Wait
+     for completion, then reread and validate the normal receipt before
+     continuing. Record `fresh subagent` as its reviewer context.
 
-Stop after the handoff. The builder never continues into Phase B in the same
-session.
+If automatic execution fails or any required property becomes uncertain, keep
+the pending request intact, set activity to `ready`, and stop with the existing
+manual fresh-session handoff. Never let the builder review its own work or skip
+a selected independent-review gate.
+
+The builder never performs Phase B itself. It may continue only after a manual
+reviewer session or automatic isolated reviewer produced a valid current receipt.
 
 ### Phase B - perform the review
 
@@ -144,10 +181,12 @@ Use this phase when a current pending request exists.
    recorded merge base, the exact spec hash matches, and no path differs from
    the target except `blueprint/context/review.md` and
    `blueprint/context/findings.md`. Stop on any mismatch or stale state.
-2. Proceed only from the fresh reviewer handoff. Record `fresh session` as a
-   declaration, never as cryptographic proof. If the reviewer has the builder
+2. Proceed only from the fresh reviewer handoff. Record `fresh session` for a
+   manual reviewer or `fresh subagent` for an automatic isolated reviewer. This
+   is a declaration, never cryptographic proof. If the reviewer has the builder
    conversation or is the builder continuing in place, stop and request a fresh
-   session.
+   context. For a legacy request with no `Requested execution`, require a fresh
+   reviewer session, record `fresh session`, and omit `Actual execution`.
 3. Run Steps 1 through 3 across `current` with quality, security, performance,
    and tests together. Review the code fresh against the recorded
    `Base commit` and `Target commit`; exclude the request and findings files
@@ -164,7 +203,9 @@ Use this phase when a current pending request exists.
    non-empty, using an explicit `None` entry when appropriate. List every
    unavailable verification command under Remaining risk, even when Check was
    not required and the receipt may still pass. Otherwise use
-   `changes-requested` and name the exact blockers.
+   `changes-requested` and name the exact blockers. Record actual `automatic`
+   with `fresh subagent`, or actual `manual` with `fresh session`, including an
+   explicit manual fallback from an automatic request.
 6. Report the receipt target, reviewer adapter and model, commands, evidence,
    findings, remaining risk, and whether the receipt passed. Never repair code
    from the reviewer session.

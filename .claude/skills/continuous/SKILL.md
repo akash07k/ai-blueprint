@@ -27,6 +27,7 @@ A direct Continuous request authorizes these local actions for this run:
 
 - create and switch local feature branches
 - create configured checkpoint commits on those branches
+- create required immutable independent-review checkpoints
 - create the final local feature commit
 - squash-merge a completed feature into the local default branch
 - delete the merged local feature branch
@@ -206,15 +207,25 @@ feature and clearly required by project standards. Never mark a finding
 
 Any P0 or P1 left `open` or `fixed` stops the loop before completion.
 
-When independent review is selected, ensure the feature is in an approved clean
+When independent review is selected, ensure the feature is in a clean immutable
 checkpoint. First rerun final verification and the selected Check gate, set the
-spec status to `verified`, and include that exact spec in the checkpoint. Then
-prepare `/audit independent current`, set activity to `ready`, and stop with the
-selected adapter and model handoff. Continuous Mode never performs its own
-independent review. On `/continuous resume`, continue only with a current
-`passed` receipt. For `changes-requested`, repair within the configured attempt
-limit, obtain a new checkpoint, and prepare a new handoff. Review the whole new
-target again.
+spec status to `verified`, and include that exact spec in the checkpoint. This
+review checkpoint is covered by Continuous Mode's scoped local lifecycle
+authority even when step checkpoint commits are disabled. Then follow
+`/audit independent current`. With `review.independentExecution: "automatic"`,
+spawn and wait for the isolated reviewer and validate its normal receipt before
+continuing. With `manual`, or when automatic capability cannot prove isolation,
+identity, model, and completion, set activity to `ready` and stop with the
+manual handoff. Continuous Mode never performs its own independent review. On
+`/continuous resume`, continue only with a current `passed` receipt. For
+`changes-requested`, repair within the configured attempt limit, obtain a new
+checkpoint, and review the whole new target again.
+
+The request records `Requested execution`; the receipt records `Actual
+execution`. Require the execution and reviewer-context pairing defined by the
+project-local review contract before continuing the feature loop.
+A pending request without `Requested execution` is legacy manual-only. Never add
+execution fields or run a subagent against it.
 
 ### 2.6 Complete locally like a human
 

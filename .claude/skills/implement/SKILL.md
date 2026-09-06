@@ -122,6 +122,29 @@ If Verify or a required gate fails, repair only in-scope defects, rerun the
 narrow failing check, then rerun the final gate. Stop on repeated failure,
 missing infrastructure, or a product decision.
 
+After final Verify and required Check pass, set the active spec to `verified`
+with every completed box checked. Then resolve independent review before the
+final packet:
+
+1. If `qualityGates.regular.independentReview` does not select review and no
+   request already exists, proceed directly to the final review packet.
+2. Otherwise show the exact product, test, and verified-spec candidate for the
+   immutable review checkpoint. Obtain explicit commit approval when the exact
+   checkpoint does not already exist, then create or use it. Configuration,
+   including `review.independentExecution: "automatic"`, never grants commit
+   permission, even when normal checkpoint commits are disabled.
+3. Follow `/audit independent current` to prepare or reuse the request and record
+   `Requested execution`. For requested `automatic`, start and wait for the
+   generic isolated current-runtime child instructed from the project-local
+   Audit skill, then validate the receipt. For requested `manual`, or when
+   automatic capability is unavailable, preserve the request and stop with the
+   manual fresh-session handoff. Treat an existing request without `Requested
+   execution` as legacy manual-only: never add execution fields or run a
+   subagent against it.
+4. Continue to the final packet only with a current passing receipt whose
+   requested execution, actual execution, and reviewer context form an allowed
+   pairing. Never self-review or silently skip a selected gate.
+
 ## Final handoff
 
 Read `blueprint/context/findings.md` and `blueprint/context/review.md` once.
@@ -131,7 +154,6 @@ spec checklist step, mark it fixed after its check passes, then send it back to
 
 When all steps and required gates pass:
 
-- Set the active spec status to `verified` and keep all completed boxes checked.
 - Update activity to `ready` with `/complete` as the resume command.
 - Present the branch, changes grouped by area, exact checks run, how to try it,
   findings and independent-review state, known risks, configured gate outcomes,
@@ -156,5 +178,8 @@ named area. If the feature spans too many distinct areas for one useful pass,
 name the sections first and let the user choose where to begin. Remain read-only
 unless the user separately requests changes.
 
-Never commit, merge, push, deploy, publish, or start unrelated work from this
-skill.
+Never create an ordinary step, product, or work-level commit from this skill.
+The sole exception is exactly one immutable independent-review checkpoint after
+showing its exact candidate and receiving current explicit commit approval.
+Configuration never supplies that approval. Never merge, push, deploy, publish,
+or start unrelated work from this skill.

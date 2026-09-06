@@ -613,6 +613,7 @@ const DASHBOARD_HTML: string = `<!doctype html>
               <div class="fact"><span>Version</span><span id="version">-</span></div>
               <div class="fact"><span>Adapters</span><span id="adapters">-</span></div>
               <div class="fact"><span>Config</span><span id="config">-</span></div>
+              <div class="fact"><span>Review execution</span><span id="review-execution">-</span></div>
               <div class="fact"><span>Onboarding</span><span id="onboarding">-</span></div>
               <div class="fact"><span>Overview</span><span id="overview">-</span></div>
             </div>
@@ -838,6 +839,8 @@ const DASHBOARD_HTML: string = `<!doctype html>
         : status.configuration.state === "invalid"
           ? "invalid, using defaults"
           : "built-in defaults";
+      byId("review-execution").textContent =
+        status.configuration.values.review.independentExecution;
       byId("regular-gates").textContent = formatGates(
         status.configuration.values.qualityGates.regular
       );

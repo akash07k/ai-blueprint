@@ -88,8 +88,10 @@ interface StatusReview {
   targetCommit: string | null;
   requestedReviewer: string | null;
   requestedModel: string | null;
+  requestedExecution: string | null;
   reviewerAdapter: string | null;
   reviewerModel: string | null;
+  actualExecution: string | null;
 }
 
 interface StatusOverview {
@@ -272,6 +274,11 @@ function formatHumanStatus(
     formatRow("Version", status.blueprint.version || "unknown", style),
     formatRow("Adapters", adapters, style),
     formatRow("Config", formatConfigValue(status.configuration.state), style),
+    formatRow(
+      "Review exec.",
+      status.configuration.values.review.independentExecution,
+      style
+    ),
     formatRow("Onboarding", status.onboarding.state, style),
     formatRow(
       "Regular gates",
@@ -458,9 +465,11 @@ function formatReviewValue(review: StatusReview, style: TextStyle): string {
   const freshness = review.freshness === "current" ? "current" : review.freshness;
   const reviewer = review.reviewerAdapter || review.requestedReviewer;
   const model = review.reviewerModel || review.requestedModel;
+  const execution = review.actualExecution || review.requestedExecution;
   const reviewerLabel = reviewer && model ? `${reviewer}/${model}` : reviewer || model;
-  const value = reviewerLabel
-    ? `${review.state}, ${freshness}, ${reviewerLabel}`
+  const details = [reviewerLabel, execution].filter(Boolean).join(", ");
+  const value = details
+    ? `${review.state}, ${freshness}, ${details}`
     : `${review.state}, ${freshness}`;
 
   return review.state === "passed" && review.freshness === "current"
@@ -621,8 +630,10 @@ function formatReview(review: IndependentReviewSummary): StatusReview {
     targetCommit: review.targetCommit,
     requestedReviewer: review.requestedReviewer,
     requestedModel: review.requestedModel,
+    requestedExecution: review.requestedExecution,
     reviewerAdapter: review.reviewerAdapter,
-    reviewerModel: review.reviewerModel
+    reviewerModel: review.reviewerModel,
+    actualExecution: review.actualExecution
   };
 }
 
@@ -798,7 +809,7 @@ function selectNextAction(
       return {
         command: "/audit independent current",
         reason: review.state === "pending"
-          ? "Complete the pending review from the selected fresh reviewer session."
+          ? "Complete the pending review from the selected fresh reviewer context."
           : "Prepare or refresh the required independent review."
       };
     }
