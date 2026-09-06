@@ -3,6 +3,35 @@
 Notable changes to AI Blueprint are documented here. Release dates reflect the
 published `create-ai-blueprint` package.
 
+## [1.6.0] - 2026-09-06
+
+### Added
+
+- Added automatic isolated independent review for sensitive or unusually broad
+  work when the active adapter can prove fresh reviewer context, with a manual
+  handoff fallback when it cannot.
+- Added a sortable Findings table to the local dashboard with additive sorting
+  by finding ID, priority, status, or description.
+
+### Changed
+
+- Defaulted independent-review selection to `when-sensitive` and review
+  execution to `automatic` for new projects while preserving explicit project
+  settings.
+- Centered the active unchecked roadmap item, or the next planned item when no
+  feature is active, while preserving manual scrolling during ordinary dashboard
+  refreshes.
+- Recorded requested and actual independent-review execution so completion can
+  validate how fresh review evidence was produced.
+
+### Fixed
+
+- Recognized strict older `Current Feature` identity lines in active work and
+  history while requiring new Feature, Fix, and Rollback specs to use canonical
+  headings.
+- Kept stale valid activity visible as interrupted and resumable without
+  counting it as a project-health warning.
+
 ## [1.5.4] - 2026-09-04
 
 ### Added
