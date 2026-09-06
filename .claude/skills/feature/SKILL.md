@@ -93,7 +93,16 @@ resume this skill. Bugs and small unplanned changes belong in `/fix`.
 Draft and critique in context, then write
 `blueprint/context/current-feature.md` once. A later write is only for a
 mechanical correction or user-requested revision. Record `**Branch:**` with the
-full configured feature branch, then use these headings:
+full configured feature branch. The first heading and build-plan identity must
+use this canonical form:
+
+```markdown
+# Feature: <title>
+
+**From build-plan:** feature <id>
+```
+
+Then use these section headings:
 
 - Goal
 - Design reference, only for visual or replication work

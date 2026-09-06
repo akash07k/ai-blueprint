@@ -22,7 +22,6 @@ interface RunStateWarning {
   code:
     | "invalid_run_state_path"
     | "malformed_run_state"
-    | "stale_run_state"
     | "unsafe_run_state_path";
   message: string;
 }
@@ -144,13 +143,6 @@ function parseRunState(value: string, now: Date = new Date()): RunStateSummary {
       now.getTime() - Date.parse(updatedAt) > RUN_STALE_AFTER_MS
     ? "stale"
     : "current";
-  const warnings: RunStateWarning[] = freshness === "stale"
-    ? [{
-        code: "stale_run_state",
-        message: `Recorded /${command} activity has not updated for over one hour and may have been interrupted.`
-      }]
-    : [];
-
   return {
     state: "recorded",
     mode: command === "autopilot"
@@ -169,7 +161,7 @@ function parseRunState(value: string, now: Date = new Date()): RunStateSummary {
     resumeCommand,
     progress,
     feature,
-    warnings
+    warnings: []
   };
 }
 

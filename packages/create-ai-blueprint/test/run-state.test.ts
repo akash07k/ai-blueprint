@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
-import test from "node:test";
+import fs from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import test, { type TestContext } from "node:test";
 
-import { parseRunState } from "../lib/run-state.js";
+import { parseRunState, readRunState } from "../lib/run-state.js";
 
 test("parseRunState returns a recorded Continuous run", () => {
   const run = parseRunState(JSON.stringify({
@@ -40,7 +43,10 @@ test("parseRunState marks interrupted running activity as stale", () => {
   }), new Date("2026-08-26T12:00:01.000Z"));
 
   assert.equal(run.freshness, "stale");
-  assert.equal(run.warnings[0]?.code, "stale_run_state");
+  assert.equal(run.state, "recorded");
+  assert.equal(run.status, "running");
+  assert.equal(run.resumeCommand, "/continuous resume");
+  assert.deepEqual(run.warnings, []);
 });
 
 test("parseRunState treats other commands as manual mode", () => {
@@ -78,4 +84,27 @@ test("parseRunState rejects malformed or incomplete state", () => {
     })).state,
     "malformed"
   );
+});
+
+test("readRunState keeps unsafe and invalid-path warnings", async (t) => {
+  const projectRoot = await fs.mkdtemp(path.join(os.tmpdir(), "blueprint-run-state-"));
+  const stateRoot = path.join(projectRoot, "blueprint", ".state");
+  const outsideFile = path.join(projectRoot, "outside.json");
+  const runStatePath = path.join(stateRoot, "run.json");
+  t.after(() => fs.rm(projectRoot, { recursive: true, force: true }));
+
+  await fs.mkdir(stateRoot, { recursive: true });
+  await fs.writeFile(outsideFile, "{}\n");
+  await fs.symlink(outsideFile, runStatePath);
+
+  const unsafe = await readRunState(projectRoot);
+  assert.equal(unsafe.state, "malformed");
+  assert.equal(unsafe.warnings[0]?.code, "unsafe_run_state_path");
+
+  await fs.rm(runStatePath);
+  await fs.mkdir(runStatePath);
+
+  const invalid = await readRunState(projectRoot);
+  assert.equal(invalid.state, "malformed");
+  assert.equal(invalid.warnings[0]?.code, "invalid_run_state_path");
 });

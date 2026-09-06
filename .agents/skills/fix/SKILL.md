@@ -36,7 +36,9 @@ while a spec is active, repair its findings through `/implement` instead.
 
 Pull context from `blueprint/context/project-overview.md` and `blueprint/context/coding-standards.md`,
 then write a short spec to `blueprint/context/current-feature.md` (this file holds whatever
-is being built now, feature or fix). Keep it lighter than a feature spec:
+is being built now, feature or fix). Its first heading must be exactly
+`# Fix: <title>`, and it must retain the `**Type:** Fix` contract below. Keep it
+lighter than a feature spec:
 
 - **Title** - the bug or change in a few words.
 - **Type:** Fix  (so `/complete` logs it to `blueprint/history/fixes/`, not `blueprint/history/features/`).

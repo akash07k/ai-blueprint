@@ -123,6 +123,31 @@ test("readProjectStatus reports active work, findings, Git, and the next step", 
   assert.deepEqual(status.warnings, []);
 });
 
+test("readProjectStatus recognizes the strict Current Feature compatibility line", async (t) => {
+  const projectRoot = await createProject(t, {
+    currentWork: `# Current Feature
+
+**Feature 2: Status command**
+**Status:** in progress
+
+## Build steps
+
+- [ ] Print status.
+`,
+    findings: emptyFindings(),
+    branch: "feature/status-command"
+  });
+
+  const status = await readProjectStatus(projectRoot);
+
+  assert.equal(status.currentWork.state, "active");
+  assert.equal(status.currentWork.type, "feature");
+  assert.equal(status.currentWork.title, "Status command");
+  assert.equal(status.currentWork.buildPlanItem, "2");
+  assert.equal(status.health, "ok");
+  assert.deepEqual(status.warnings, []);
+});
+
 test("readProjectStatus reports Copilot from the manifest", async (t) => {
   const projectRoot = await createProject(t, {
     currentWork: resetCurrentWork(),
@@ -730,12 +755,18 @@ test("readProjectStatus offers the recovery command for interrupted activity", a
 
   const status = await readProjectStatus(projectRoot);
 
+  assert.equal(status.activity.state, "recorded");
   assert.equal(status.activity.freshness, "stale");
+  assert.equal(status.activity.status, "running");
+  assert.equal(status.activity.resumeCommand, "/continuous resume");
+  assert.equal(status.health, "ok");
+  assert.deepEqual(status.warnings, []);
+  assert.deepEqual(status.completion, { state: "idle", blockers: [] });
   assert.deepEqual(status.nextAction, {
     command: "/continuous resume",
     reason: "Recorded /continuous activity appears interrupted. Confirm the project state before resuming."
   });
-  assert.ok(status.warnings.some((warning) => warning.code === "stale_run_state"));
+  assert.doesNotMatch(formatHumanStatus(status), /Warnings|Attention/);
 });
 
 test("readProjectStatus sends malformed dashboard state to Doctor", async (t) => {

@@ -43,6 +43,7 @@ const CURRENT_WORK_PATH = path.join(
 );
 const RESET_MARKER = "_Nothing in progress.";
 const CHECKBOX_PATTERN = /^\s*-\s+\[([ xX])\]\s+(.+?)\s*$/;
+const COMPATIBILITY_FEATURE_PATTERN = /^\*\*Feature ([0-9]+[a-zA-Z]?): ([^*\r\n]+)\*\*\s*$/m;
 
 async function readCurrentWork(projectRoot: string): Promise<CurrentWorkSummary> {
   const currentWorkPath = path.join(projectRoot, CURRENT_WORK_PATH);
@@ -97,7 +98,14 @@ function parseCurrentWork(markdown: string): CurrentWorkSummary {
   const explicitType = markdown.match(
     /^\*\*Type:\*\*\s*(Feature|Fix|Rollback)\s*$/im
   )?.[1];
-  const typeLabel = explicitType || headingIdentity?.[1] || fieldIdentity?.[1] || null;
+  const canonicalType = normalizeWorkType(
+    explicitType || headingIdentity?.[1] || fieldIdentity?.[1] || null
+  );
+  const compatibilityFeature = !canonicalType || canonicalType === "feature"
+    ? parseCompatibilityFeature(markdown, heading)
+    : null;
+  const typeLabel = canonicalType ||
+    (compatibilityFeature ? "Feature" : null);
   const type = normalizeWorkType(typeLabel);
   const fieldValue = fieldIdentity?.[2]?.trim() || null;
   const fieldFeatureIdentity = type === "feature"
@@ -106,6 +114,7 @@ function parseCurrentWork(markdown: string): CurrentWorkSummary {
   const title = headingIdentity?.[2]?.trim() ||
     fieldFeatureIdentity?.[2]?.trim() ||
     fieldValue ||
+    compatibilityFeature?.title ||
     heading;
   const status = markdown.match(/^\*\*Status:\*\*\s*(.+)$/im)?.[1]?.trim() || null;
   const explicitBuildPlanItem = markdown.match(
@@ -113,6 +122,7 @@ function parseCurrentWork(markdown: string): CurrentWorkSummary {
   )?.[1]?.toLowerCase() || null;
   const buildPlanItem = explicitBuildPlanItem ||
     fieldFeatureIdentity?.[1]?.toLowerCase() ||
+    compatibilityFeature?.id ||
     null;
   const steps = parseBuildSteps(markdown);
   const warnings: CurrentWorkWarning[] = [];
@@ -146,6 +156,20 @@ function parseCurrentWork(markdown: string): CurrentWorkSummary {
     nextStep: normalizedSteps.find((step) => !step.checked) || null,
     warnings
   };
+}
+
+function parseCompatibilityFeature(
+  markdown: string,
+  heading: string | null
+): { id: string; title: string } | null {
+  if (heading?.toLowerCase() !== "current feature") {
+    return null;
+  }
+
+  const match = markdown.match(COMPATIBILITY_FEATURE_PATTERN);
+  const id = match?.[1]?.toLowerCase() || null;
+  const title = match?.[2]?.trim() || null;
+  return id && title ? { id, title } : null;
 }
 
 function parseBuildSteps(markdown: string): CurrentWorkStep[] | null {
@@ -236,7 +260,12 @@ function getErrorCode(error: unknown): string | undefined {
     : undefined;
 }
 
-export { CURRENT_WORK_PATH, parseCurrentWork, readCurrentWork };
+export {
+  CURRENT_WORK_PATH,
+  parseCompatibilityFeature,
+  parseCurrentWork,
+  readCurrentWork
+};
 
 export type {
   CurrentWorkState,

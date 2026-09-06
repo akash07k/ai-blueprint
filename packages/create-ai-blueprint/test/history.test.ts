@@ -48,6 +48,78 @@ test("parseHistoryItem accepts a numbered feature field", () => {
   );
 });
 
+test("parseHistoryItem accepts the strict Current Feature compatibility line", () => {
+  assert.deepEqual(
+    parseHistoryItem(
+      `# Current Feature
+
+**Feature 4: Accounts and login**
+**Status:** verified
+`,
+      "feature",
+      "features/04-accounts-and-login.md"
+    ),
+    {
+      type: "feature",
+      title: "Accounts and login",
+      buildPlanItem: "4",
+      status: "verified",
+      file: "features/04-accounts-and-login.md"
+    }
+  );
+});
+
+test("parseHistoryItem does not apply feature compatibility to near misses or other groups", () => {
+  const nearMiss = parseHistoryItem(
+    `# Current Feature
+
+**Feature 4 - Accounts and login**
+`,
+    "feature",
+    "features/04-accounts-and-login.md"
+  );
+  const fix = parseHistoryItem(
+    `# Current Feature
+
+**Feature 4: Accounts and login**
+`,
+    "fix",
+    "fixes/accounts-and-login.md"
+  );
+  const rollback = parseHistoryItem(
+    `# Current Feature
+
+**Feature 4: Accounts and login**
+`,
+    "rollback",
+    "rollbacks/accounts-and-login.md"
+  );
+  const canonicalFix = parseHistoryItem(
+    `# Current Feature
+
+**Feature 4: Accounts and login**
+**Fix:** Repair account login
+`,
+    "feature",
+    "features/04-accounts-and-login.md"
+  );
+
+  assert.equal(nearMiss.title, "Current Feature");
+  assert.equal(nearMiss.buildPlanItem, null);
+  assert.deepEqual(
+    [fix.type, fix.title, fix.buildPlanItem],
+    ["fix", "Current Feature", null]
+  );
+  assert.deepEqual(
+    [rollback.type, rollback.title, rollback.buildPlanItem],
+    ["rollback", "Current Feature", null]
+  );
+  assert.deepEqual(
+    [canonicalFix.type, canonicalFix.title, canonicalFix.buildPlanItem],
+    ["fix", "Repair account login", null]
+  );
+});
+
 test("readHistory reads feature, fix, and rollback archives", async (t) => {
   const projectRoot = await createProject(t);
 

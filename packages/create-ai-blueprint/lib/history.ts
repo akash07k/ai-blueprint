@@ -1,6 +1,8 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
+import { parseCompatibilityFeature } from "./current-work.js";
+
 type HistoryItemType = "feature" | "fix" | "rollback";
 
 interface HistoryItem {
@@ -102,20 +104,28 @@ function parseHistoryItem(
   const fieldIdentity = markdown.match(
     /^\*\*(Feature|Fix|Rollback):\*\*\s*(.+)$/im
   );
-  const type = normalizeHistoryType(heading?.[1] || fieldIdentity?.[1]) || fallbackType;
+  const genericHeading = heading?.[2]?.trim() || null;
+  const canonicalType = normalizeHistoryType(heading?.[1] || fieldIdentity?.[1]);
+  const compatibilityFeature = fallbackType === "feature" &&
+      (!canonicalType || canonicalType === "feature")
+    ? parseCompatibilityFeature(markdown, genericHeading)
+    : null;
+  const type = canonicalType ||
+    (compatibilityFeature ? "feature" : fallbackType);
   const fieldValue = fieldIdentity?.[2]?.trim() || null;
   const fieldFeatureIdentity = type === "feature"
     ? fieldValue?.match(/^([0-9]+[a-z]?)\.?(?:\s+|$)(.*)$/i)
     : null;
-  const genericHeading = heading?.[2]?.trim();
   const title = heading?.[1]
     ? genericHeading || titleFromFile(file)
-    : fieldFeatureIdentity?.[2]?.trim() || fieldValue || genericHeading || titleFromFile(file);
+    : fieldFeatureIdentity?.[2]?.trim() || fieldValue || compatibilityFeature?.title ||
+      genericHeading || titleFromFile(file);
   const explicitBuildPlanItem = markdown.match(
     /^\*\*From build-plan:\*\*\s*feature\s+([0-9]+[a-z]?)\b/im
   )?.[1]?.toLowerCase() || null;
   const buildPlanItem = explicitBuildPlanItem ||
     fieldFeatureIdentity?.[1]?.toLowerCase() ||
+    compatibilityFeature?.id ||
     null;
   const status = markdown.match(/^\*\*Status:\*\*\s*(.+)$/im)?.[1]?.trim() || null;
 

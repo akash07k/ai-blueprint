@@ -121,7 +121,9 @@ remediation or explicitly plan the dependent rollbacks.
 ## Step 4 - write the rollback spec
 
 Write `blueprint/context/current-feature.md` using
-`reference/rollback-spec-template.md`. Fill in:
+`reference/rollback-spec-template.md`. Its first heading must be exactly
+`# Rollback: Feature <id> - <title>`, and it must retain the existing
+`**Type:** Rollback` contract. Fill in:
 
 - the full rollback branch from the configured prefix plus the rollback title in
   lowercase kebab-case

@@ -450,9 +450,19 @@ async function validateVerificationContract(): Promise<void> {
         "Do not read the whole overview by default",
         "Do not invent presets, defaults, limits, permissions",
         "Write the final spec once",
+        "# Feature: <title>",
+        "**From build-plan:** feature <id>",
         "Record `**Branch:**` with the",
         "Do not bury repair inside this feature",
         "Never implement from this skill"
+      ]
+    ],
+    [
+      ".agents/skills/fix/SKILL.md",
+      [
+        "first heading must be exactly",
+        "`# Fix: <title>`",
+        "`**Type:** Fix` contract"
       ]
     ],
     [
@@ -512,6 +522,8 @@ async function validateVerificationContract(): Promise<void> {
       ".agents/skills/rollback/SKILL.md",
       [
         "target commit and parent commit as full 40-character SHA values",
+        "`# Rollback: Feature <id> - <title>`",
+        "`**Type:** Rollback` contract",
         "stop before Step 2 and before",
         "writing or changing `blueprint/context/current-feature.md`",
         "Publish `blocked` to",
