@@ -497,7 +497,24 @@ const DASHBOARD_HTML: string = `<!doctype html>
     .fact.stacked span:last-child { max-width: 100%; text-align: left; }
     .status-rail .health-summary { margin-top: 0; }
     .status-rail .value { font-size: 15px; }
-    .findings-card li, .completion-card li { font-size: 11px; }
+    .findings-table-wrap { max-width: 100%; overflow-x: auto; }
+    .findings-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    .findings-table th, .findings-table td { padding: 8px 4px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    .findings-table th:first-child, .findings-table td:first-child { width: 38px; }
+    .findings-table th:nth-child(2), .findings-table td:nth-child(2) { width: 34px; }
+    .findings-table th:nth-child(3), .findings-table td:nth-child(3) { width: 68px; }
+    .findings-table th { color: var(--ink-muted); font: 600 9px/1 var(--font-mono); }
+    .findings-table td { color: var(--ink-soft); font-size: 10px; line-height: 1.4; }
+    .findings-table tbody tr:last-child td { border-bottom: 0; }
+    .findings-table .finding-description { overflow-wrap: anywhere; }
+    .findings-table .finding-status { text-transform: capitalize; }
+    .findings-sort { display: inline-flex; align-items: center; gap: 3px; min-width: 0; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; text-transform: uppercase; cursor: pointer; }
+    .findings-sort:hover, .findings-sort:focus-visible { color: var(--blue-dark); }
+    .findings-sort:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+    .findings-sort-indicator { color: var(--blue-dark); white-space: nowrap; }
+    .findings-empty { color: var(--ink-muted); text-align: center; }
+    .findings-sort-summary { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+    .completion-card li { font-size: 11px; }
 
     footer { margin-top: 18px; color: var(--ink-muted); font: 11px/1.6 var(--font-mono); text-align: center; }
 
@@ -637,7 +654,21 @@ const DASHBOARD_HTML: string = `<!doctype html>
 
         <article class="card findings-card">
           <div class="card-head"><h2 class="section-title">Findings</h2><span class="value" id="findings-count">-</span></div>
-          <ul id="findings-list"><li class="empty">Loading findings...</li></ul>
+          <div class="findings-table-wrap">
+            <table class="findings-table">
+              <caption class="findings-sort-summary">Active findings</caption>
+              <thead>
+                <tr>
+                  <th scope="col"><button class="findings-sort" type="button" data-findings-sort="id">F# <span class="findings-sort-indicator" aria-hidden="true">↑3</span></button></th>
+                  <th scope="col" aria-sort="ascending"><button class="findings-sort" type="button" data-findings-sort="severity">P# <span class="findings-sort-indicator" aria-hidden="true">↑1</span></button></th>
+                  <th scope="col"><button class="findings-sort" type="button" data-findings-sort="status">Status <span class="findings-sort-indicator" aria-hidden="true">↑2</span></button></th>
+                  <th scope="col"><button class="findings-sort" type="button" data-findings-sort="title">Description <span class="findings-sort-indicator" aria-hidden="true">↕</span></button></th>
+                </tr>
+              </thead>
+              <tbody id="findings-body"><tr><td class="findings-empty" colspan="4">Loading findings...</td></tr></tbody>
+            </table>
+          </div>
+          <p class="findings-sort-summary" id="findings-sort-summary" aria-live="polite">Sorted by P# ascending, Status ascending, then F# ascending.</p>
         </article>
 
         <article class="card completion-card">
@@ -652,6 +683,16 @@ const DASHBOARD_HTML: string = `<!doctype html>
 
   <script>
     const byId = (id) => document.getElementById(id);
+    const findingIdCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
+    const findingSeverityOrder = { P0: 0, P1: 1, P2: 2, P3: 3 };
+    const findingStatusOrder = { unverified: 0, open: 1, fixed: 2 };
+    const findingSortLabels = { id: "F#", severity: "P#", status: "Status", title: "Description" };
+    let activeFindings = [];
+    let findingSortDescriptors = [
+      { key: "severity", direction: "ascending" },
+      { key: "status", direction: "ascending" },
+      { key: "id", direction: "ascending" }
+    ];
     let lastPayload = "";
     let lastBuildPlanTargetKey;
     let refreshing = false;
@@ -672,6 +713,107 @@ const DASHBOARD_HTML: string = `<!doctype html>
         if (values.length === 0) item.className = "empty";
         list.append(item);
       }
+    }
+
+    function compareFindingValues(left, right, key) {
+      if (key === "severity") {
+        return (findingSeverityOrder[left.severity] ?? 4) -
+          (findingSeverityOrder[right.severity] ?? 4);
+      }
+      if (key === "status") {
+        return (findingStatusOrder[left.status] ?? 3) -
+          (findingStatusOrder[right.status] ?? 3);
+      }
+      if (key === "id") return findingIdCollator.compare(left.id, right.id);
+      return findingIdCollator.compare(left.title, right.title);
+    }
+
+    function sortFindings(findings) {
+      return [...findings]
+        .map((finding, sourceIndex) => ({ finding, sourceIndex }))
+        .sort((left, right) => {
+          for (const descriptor of findingSortDescriptors) {
+            const comparison = compareFindingValues(left.finding, right.finding, descriptor.key);
+            if (comparison !== 0) {
+              return descriptor.direction === "ascending" ? comparison : -comparison;
+            }
+          }
+          return left.sourceIndex - right.sourceIndex;
+        })
+        .map((entry) => entry.finding);
+    }
+
+    function updateFindingsSortControls() {
+      const buttons = document.querySelectorAll("[data-findings-sort]");
+      for (const button of buttons) {
+        const key = button.dataset.findingsSort;
+        const index = findingSortDescriptors.findIndex((descriptor) => descriptor.key === key);
+        const indicator = button.querySelector(".findings-sort-indicator");
+        const header = button.closest("th");
+        header.removeAttribute("aria-sort");
+        if (index < 0) {
+          indicator.textContent = "↕";
+          continue;
+        }
+
+        const descriptor = findingSortDescriptors[index];
+        indicator.textContent = (descriptor.direction === "ascending" ? "↑" : "↓") +
+          String(index + 1);
+        if (index === 0) header.setAttribute("aria-sort", descriptor.direction);
+      }
+
+      byId("findings-sort-summary").textContent = "Sorted by " +
+        findingSortDescriptors.map((descriptor, index) =>
+          findingSortLabels[descriptor.key] + " " + descriptor.direction +
+          " priority " + String(index + 1)
+        ).join(", then ") + ".";
+    }
+
+    function renderFindings(findings) {
+      activeFindings = [...findings];
+      const body = byId("findings-body");
+      body.replaceChildren();
+      const sortedFindings = sortFindings(activeFindings);
+
+      if (sortedFindings.length === 0) {
+        const row = document.createElement("tr");
+        const cell = document.createElement("td");
+        cell.className = "findings-empty";
+        cell.colSpan = 4;
+        cell.textContent = "No active findings.";
+        row.append(cell);
+        body.append(row);
+        updateFindingsSortControls();
+        return;
+      }
+
+      for (const finding of sortedFindings) {
+        const row = document.createElement("tr");
+        const values = [finding.id, finding.severity, finding.status, finding.title];
+        values.forEach((value, index) => {
+          const cell = document.createElement("td");
+          cell.textContent = value;
+          if (index === 2) cell.className = "finding-status";
+          if (index === 3) cell.className = "finding-description";
+          row.append(cell);
+        });
+        body.append(row);
+      }
+      updateFindingsSortControls();
+    }
+
+    function promoteFindingsSort(key) {
+      const index = findingSortDescriptors.findIndex((descriptor) => descriptor.key === key);
+      if (index === 0) {
+        const current = findingSortDescriptors[0];
+        current.direction = current.direction === "ascending" ? "descending" : "ascending";
+      } else if (index > 0) {
+        const [descriptor] = findingSortDescriptors.splice(index, 1);
+        findingSortDescriptors.unshift(descriptor);
+      } else {
+        findingSortDescriptors.unshift({ key, direction: "ascending" });
+      }
+      renderFindings(activeFindings);
     }
 
     function addTimelineItem(list, options) {
@@ -932,11 +1074,7 @@ const DASHBOARD_HTML: string = `<!doctype html>
       byId("git-upstream").textContent = git.upstream || "none";
 
       byId("findings-count").textContent = status.findings.active.length + " active";
-      setList(
-        "findings-list",
-        status.findings.active.map((finding) => finding.id + " [" + finding.severity + "] " + finding.status + " - " + finding.title),
-        "No active findings."
-      );
+      renderFindings(status.findings.active);
 
       setPill("completion-state", status.completion.state);
       setList("completion-list", status.completion.blockers, "No completion blockers.");
@@ -971,6 +1109,9 @@ const DASHBOARD_HTML: string = `<!doctype html>
       }
     }
 
+    for (const button of document.querySelectorAll("[data-findings-sort]")) {
+      button.addEventListener("click", () => promoteFindingsSort(button.dataset.findingsSort));
+    }
     refresh();
     const events = new EventSource("/api/events");
     events.addEventListener("refresh", refresh);
