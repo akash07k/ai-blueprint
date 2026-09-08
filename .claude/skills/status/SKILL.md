@@ -88,6 +88,17 @@ state.
    state is a warning, not a blocker for the underlying workflow; point to
    `/doctor` to inspect and offer the approved generated-state reset.
 
+Before choosing the next action, use the read-only candidate screen in the
+installed Complete skill (`../complete/reference/completion-recovery.md`). Inspect
+branch, working-tree changes, live state, relevant archives, and matching local
+work refs. Route a completion candidate to `/complete` for full phase proof; do
+not write Git objects or claim recovery has been verified from Status. On a clean
+local default branch with consistent live state and no matching work ref or
+pending completion evidence, the archive is settled history. Continue normal
+routing without requiring historical transient objects lost in a clone or prune.
+A reset stub alone does not establish this state. Actual candidates with missing
+or conflicting evidence need identification/repair before new work.
+
 ## Output
 
 A short, scannable summary, not a wall of text. Aim for something like:
@@ -110,6 +121,9 @@ A short, scannable summary, not a wall of text. Aim for something like:
 End with a single suggested next action, chosen in this order:
 
 - The project configuration is invalid -> `/doctor`.
+- A completion candidate has conflicting or ambiguous evidence -> identify the
+  exact missing archive, branch, or commit evidence before new work.
+- Pending completion candidate -> `/complete` to prove and resume its phase.
 - Dashboard activity is malformed -> `/doctor`.
 - The overview is missing or stale and no feature is in progress -> `/overview`.
 - A spec is in progress with unchecked steps -> `/implement` and name the step.

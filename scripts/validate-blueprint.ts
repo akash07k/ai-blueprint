@@ -515,8 +515,28 @@ async function validateVerificationContract(): Promise<void> {
         "Obtain explicit commit approval",
         "For requested `automatic`",
         "Continue Complete only with a current passing receipt",
-        "pending request without `Requested execution` is legacy"
+        "pending request without `Requested execution` is legacy",
+        "Before requiring a real active spec",
+        "reference/completion-recovery.md"
       ]
+    ],
+    [
+      ".agents/skills/complete/reference/completion-recovery.md",
+      [
+        '"specBytes"',
+        '"sourceTree"',
+        '"absentOptional"',
+        "## Screen candidates read-only",
+        "## Interrupted archival, before the work commit",
+        "## Work committed, awaiting merge",
+        "## Merge already completed",
+        "Never relabel the receipt as current",
+        "Do not force-add ignored workflow files"
+      ]
+    ],
+    [
+      ".agents/skills/status/SKILL.md",
+      ["Pending completion candidate", "../complete/reference/completion-recovery.md"]
     ],
     [
       ".agents/skills/rollback/SKILL.md",
@@ -571,7 +591,9 @@ async function validateVerificationContract(): Promise<void> {
         "required immutable independent-review checkpoints",
         "automatic capability cannot prove isolation",
         "The request records `Requested execution`",
-        "pending request without `Requested execution` is legacy manual-only"
+        "pending request without `Requested execution` is legacy manual-only",
+        "../complete/reference/completion-recovery.md",
+        "never counts the same completion twice"
       ]
     ],
     [

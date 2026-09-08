@@ -38,7 +38,19 @@ check waivers, or product decisions. It always stops before those actions.
 
 ## Input and target selection
 
-With no argument:
+Before selecting an item or requiring a live active spec, inspect pending
+completion using the installed Complete skill and
+`../complete/reference/completion-recovery.md`. Use its read-only candidate screen
+first: settled clean default-branch history needs no historical transient objects
+for a new run. An actual completion candidate or an explicit request to resume
+interrupted completion requires full recovery proof, using this run's scoped Git
+authority and
+`qualityGates.continuous`. Do not repeat archival or a work commit/merge. Missing,
+conflicting, or unprovable recovery evidence stops before next-feature work. An
+active feature with no completion candidate resumes implementation normally; its
+ordinary `resume` does not require an archive or completion proof.
+
+With no argument after pending completion has been reconciled:
 
 1. Resume an active feature in `blueprint/context/current-feature.md`.
 2. Otherwise select the next unchecked leaf item in
@@ -46,7 +58,8 @@ With no argument:
 3. Continue in build-plan order until no unchecked leaf remains or
    `continuous.maxFeatures` completed features have been counted.
 
-`resume` explicitly resumes the active feature. A feature number or name may set
+`resume` explicitly resumes the active feature or its pending completion.
+A feature number or name may set
 the starting item only when no different work item is active. After that item,
 continue with the next unchecked leaf items in normal build-plan order.
 
@@ -77,9 +90,10 @@ Start only when the state is safe:
 
 - The project is a Git repository.
 - The working tree is clean on the default branch, or all dirty work belongs to
-  the active feature on its matching configured feature branch.
+  the active feature on its matching configured feature branch, including a
+  proven pending completion handled through the recovery contract.
 - The build plan is a valid ordered checkbox plan with at least one remaining
-  leaf, unless resuming an active feature.
+  leaf, unless resuming an active feature or its pending completion.
 - The overview is current. If it is stale but both plans are clear and
   consistent, refresh it using the `/overview` behavior and include that change
   with the first feature. Stop when refreshing it needs a product decision.
@@ -239,11 +253,12 @@ For the finished feature:
    receipt exists, do not rewrite the reviewed spec before archival.
 3. Confirm all steps are checked, configured gates ran, no unrelated files are
    mixed in, adapters remain aligned, and no P0/P1 blocker remains.
-4. Archive the spec under `blueprint/history/features/`, archive resolved
-   findings and any passing independent-review receipt, update the exact
-   build-plan item and parent, and reset `current-feature.md` and `review.md`.
-5. If a try guide was generated, add a concise `## Manual try guide` section to
-   that feature archive so the opt-in work survives the loop.
+4. Capture Complete's source-tree/annotation proof before any logging edits.
+   Fully prepare the archive with the exact verified spec, resolved findings,
+   original passing receipt, and any generated `## Manual try guide` section.
+5. Validate and place that archive, update the exact build-plan item/parent and
+   overview hash, then reset live evidence last using Complete's canonical rules.
+   Preserve unresolved findings; reuse a matching archive during recovery.
 6. Commit remaining branch work with one conventional feature-level message.
 7. Switch to the local default branch, squash-merge the feature branch, and
    create one conventional commit containing product work, tests, and Blueprint
@@ -254,7 +269,14 @@ For the finished feature:
 Never merge a partial or failing feature. Never push the default branch.
 
 Count the feature toward `continuous.maxFeatures` only after its local main
-commit succeeds.
+commit succeeds. On resume, reconcile the unique proven archive/default-commit
+pairs already completed in this run before incrementing; cleanup or a repeated
+resume never counts the same completion twice. If the run boundary or count
+cannot be recovered for an explicit `resume`, stop for clarification instead of
+resetting the count and exceeding the requested limit. A new invocation starting
+from a clean default branch records that current tip as its new run boundary;
+already-completed work at or before it does not count toward the new run or
+require reconstruction of an older run's count.
 
 ## Step 3 - optional final integration audit
 
