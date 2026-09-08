@@ -140,6 +140,29 @@ Other work enters the same control loop:
 Read [Core Workflow](https://ai-blueprint.dev/docs/core-workflow/) for the full
 lifecycle and command-specific behavior.
 
+## Live dashboard
+
+See your roadmap, current work, findings, and next action in one local browser
+view. The dashboard refreshes as Blueprint files and Git state change, keeping
+build steps, command activity, review gates, and completed history visible
+alongside your project's progress.
+
+![Angled AI Blueprint dashboard preview showing Article Reach project health, roadmap progress, and Git state](assets/blueprint-dashboard-angled.png)
+
+Run it from your Blueprint project:
+
+```bash
+npx create-ai-blueprint@latest dashboard
+```
+
+With the optional global CLI installed, use `blueprint dashboard` instead.
+The dashboard opens in your browser, binds to `127.0.0.1`, and stops when you
+press `Ctrl+C`. It is read-only and does not start your application or run
+workflow commands.
+
+Read [Local Dashboard](https://ai-blueprint.dev/docs/cli/dashboard/) for the
+full tour and command options.
+
 ## Command map
 
 | Skill | Purpose |
@@ -244,31 +267,6 @@ Read [Code Quality](https://ai-blueprint.dev/docs/code-quality/),
 [Project Configuration](https://ai-blueprint.dev/docs/project-configuration/)
 for the complete rules.
 
-## Context efficiency
-
-Blueprint keeps durable project context available without loading every workflow
-rule into every Claude Code turn. New installations import only `AGENTS.md` at
-Claude startup. Each explicit workflow skill loads the compact overview, active
-spec, coding standards, or interaction guide only when that command needs it.
-Feature uses targeted repository reads and one final spec write. Implement uses
-the approved spec as its packet and runs the full Verify command once after the
-steps unless an earlier gate is necessary.
-
-`/overview` keeps generated project context below 20,000 bytes, while `/doctor`
-flags oversized legacy overviews. The focused 1.5 benchmark records internal
-paired Feature observations of 30.2% less input on an ordinary fixture and 55.6%
-less on a complex fixture. The raw disposable sessions were not retained, so
-those results are release evidence rather than a reproducible guarantee.
-
-Existing projects keep their own `CLAUDE.md` and configuration during updates.
-The updater names any obsolete direct context imports to remove. A 1.4.1 project
-normally has `project-overview.md` and `current-feature.md`; older layouts may
-also import `coding-standards.md` and `ai-interaction.md`. Restart Claude Code
-after that cleanup, then run `/doctor`. Follow the
-[updating guide](https://ai-blueprint.dev/docs/updating-blueprint/) and read the
-[benchmark](benchmarks/context-efficiency.md) for the full method, quality
-review, results, and limits.
-
 ## Automatic GitHub checks
 
 Automatic checks are an explicit setup step, not part of installation or
@@ -336,7 +334,7 @@ The [documentation](https://ai-blueprint.dev/docs/) has one page for every
 command, plus guides for testing, configuration, manual review, updating, and
 troubleshooting.
 
-## Status, dashboard, and updates
+## Status and updates
 
 Check a Blueprint project without changing it:
 
@@ -351,26 +349,15 @@ npx create-ai-blueprint@latest update --dry-run
 npx create-ai-blueprint@latest update
 ```
 
-An optional global installation exposes the shorter read-only status and local
-dashboard commands:
+An optional global installation exposes the shorter `blueprint` command:
 
 ```bash
 npm install --global create-ai-blueprint@latest
 blueprint status
-blueprint dashboard
 ```
 
-The dashboard binds to `127.0.0.1`, reads the same project files and Git state,
-and stops when you press Ctrl+C. It does not run workflow commands or expose the
-project outside the local machine.
-
-Tracked skills record dashboard activity through a packaged deterministic
-helper. It validates the complete state before an atomic replacement, so an
-invalid activity update fails without corrupting the previous dashboard state.
-
-Read [Updating Blueprint](https://ai-blueprint.dev/docs/updating-blueprint/),
-[CLI Status](https://ai-blueprint.dev/docs/cli/status/), and
-[Local Dashboard](https://ai-blueprint.dev/docs/cli/dashboard/) for details.
+Read [Updating Blueprint](https://ai-blueprint.dev/docs/updating-blueprint/) and
+[CLI Status](https://ai-blueprint.dev/docs/cli/status/) for details.
 
 ## Documentation
 
