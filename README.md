@@ -89,8 +89,11 @@ Next:
    adapter setup, and workflow visibility you want.
 2. Write `blueprint/project-plan.md` and `blueprint/build-plan.md` directly, or
    use the optional discovery skill to develop them through conversation.
-3. Run `overview` to turn those plans into durable project context. On the first
-   run, it offers a reviewed local commit for the Blueprint setup and plans.
+   A plain feature list is enough for the build plan.
+3. Run `overview` to format that list into a tracked checklist without changing
+   its scope or order, then generate durable project context. Formatting needs
+   no extra approval; unclear scope or order does. On the first run, it offers a
+   reviewed local commit for the Blueprint setup and plans.
 4. Run `feature` for the next planned item, review the generated spec, and then
    begin implementation.
 

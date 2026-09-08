@@ -391,6 +391,18 @@ async function main(): Promise<void> {
         throw new Error(`${mode} JSON status did not report the starter build plan`);
       }
 
+      const plans = status.plans as { build?: unknown } | undefined;
+      if (JSON.stringify(plans?.build) !== JSON.stringify({
+        completed: 0,
+        remaining: 0,
+        total: 0,
+        nextItem: null,
+        splitParents: [],
+        items: []
+      })) {
+        throw new Error(`${mode} JSON status reported phantom starter progress`);
+      }
+
       const updateResult = run(
         process.execPath,
         [binary, "update", "--target", targetDir, "--dry-run"],

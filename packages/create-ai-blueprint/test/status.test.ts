@@ -306,6 +306,35 @@ test("readProjectStatus selects overview before new feature work", async (t) => 
   assert.ok(status.warnings.some((warning) => warning.code === "stale_overview"));
 });
 
+test("readProjectStatus directs an onboarded plain feature list to Overview", async (t) => {
+  const projectRoot = await createProject(t, {
+    currentWork: resetCurrentWork(),
+    findings: emptyFindings(),
+    branch: "chore/setup"
+  });
+  const buildPlanPath = path.join(projectRoot, "blueprint", "build-plan.md");
+  const buildPlan = "# Build Plan\n\n- Login\n- Reports\n";
+  await fs.writeFile(buildPlanPath, buildPlan);
+
+  const status = await readProjectStatus(projectRoot);
+
+  assert.equal(status.onboarding.state, "complete");
+  assert.equal(status.nextAction.command, "/overview");
+  assert.deepEqual(status.plans.build, {
+    completed: 0,
+    remaining: 0,
+    total: 0,
+    nextItem: null,
+    splitParents: [],
+    items: []
+  });
+  assert.ok(status.warnings.some((warning) =>
+    warning.code === "no_checklist_items" &&
+    warning.message === "Build plan has no tracked checklist yet. Run /overview to format your feature list."
+  ));
+  assert.equal(await fs.readFile(buildPlanPath, "utf8"), buildPlan);
+});
+
 test("readProjectStatus keeps the overview current after a feature is checked off", async (t) => {
   const projectRoot = await createProject(t, {
     currentWork: resetCurrentWork(),

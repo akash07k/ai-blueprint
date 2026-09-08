@@ -85,7 +85,7 @@ function parseBuildPlan(markdown: string): BuildPlanSummary {
   if (items.length === 0) {
     return emptySummary({
       code: "no_checklist_items",
-      message: "Build plan has no checklist items."
+      message: "Build plan has no tracked checklist yet. Run /overview to format your feature list."
     });
   }
 

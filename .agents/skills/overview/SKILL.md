@@ -33,14 +33,18 @@ The two planning docs, already written:
 
 - `blueprint/project-plan.md` - problem, users, features, data, tech,
   monetization, UI/UX, deployment
-- `blueprint/build-plan.md` - the ordered, one-line-per-feature build checklist
+- `blueprint/build-plan.md` - the ordered, one-line-per-feature list; bullets,
+  numbered lists, and clearly separated feature lines are accepted
 
-If either is missing or still has placeholder text, stop and tell the user to
-fill it in first. This skill distills plans; it does not invent them.
+If `project-plan.md` is missing or still a placeholder, ask the user to supply
+their project decisions. This skill distills plans; it does not invent them.
+For a missing or placeholder-only build plan, follow Step 2's reviewed
+reconciliation instead of generating an overview without a real feature list.
 
 Placeholder text means the blueprint template's own scaffolding, not real
-content: checklist items like `Feature one` / `Feature two`, a trailing
-`- description`, `TODO`, `TBD`, or the template's example bullets left in place.
+content: unchanged starter instructions, legacy checklist items like `Feature
+one` / `Feature two`, a trailing `- description`, `TODO`, `TBD`, or the template's
+example bullets left in place. Starter instructions are not features.
 Watch for the masking trap in particular: `build-plan.md` can still be the stub
 while `project-plan.md` §3 already lists the real features. When that happens the
 overview can be synthesized from `project-plan.md` alone and come out looking
@@ -60,44 +64,42 @@ these, not paper over them.
 Before writing `project-overview.md`, check that the plans are shaped well enough
 to drive the build loop.
 
-`build-plan.md` should be:
+**Format clear feature lists automatically.** Invoking `/overview` authorizes
+syntax-only formatting without an extra approval pause. Convert plain bullets,
+ordinary numbered lists, or clearly separated feature lines into tracked
+numbered checkboxes, such as `- [ ] 1. Save an article`. A valid tracked checklist
+stays byte-for-byte unchanged.
 
-- a numbered checkbox list using `- [ ]` or `- [x]`
-- one feature-sized outcome per line
-- ordered roughly from first useful slice to later integrations and hardening
-- specific enough for `/feature` to turn the item into a spec
-- free of pre-build setup items such as scaffolding the app, installing the
-  framework, or prototyping the look
+Preserve wording, order, feature count, notes, headings, nesting, existing IDs,
+and completion markers, including `[X]`. Add only missing tracking syntax:
 
-Flag these as plan-shape problems:
+- Preserve explicit numbered identities, including lettered child IDs.
+- Give unnumbered features unused IDs. Check the existing plan, active work, and
+  archived feature identities first; never renumber existing items or reuse an
+  ID from history or active work.
+- Keep child relationships and attached notes intact. Do not turn nested notes
+  into features or flatten the hierarchy.
+- You may remove unchanged shipped starter guidance only. Preserve user notes.
 
-- plain bullets with no checkboxes
-- vague items like "database", "auth stuff", "make it nice", or "admin"
-- giant items that bundle many features together
-- implementation chores instead of user-visible or system-visible outcomes
-- feature lists in `project-plan.md` that do not match `build-plan.md`
+Ask for clarification before editing when structure, identities, scope, or build
+order are unclear, including duplicate IDs or ambiguous feature boundaries.
+Adding, removing, splitting, combining, reordering, or changing feature meaning
+requires a user decision; none is syntax-only formatting. Flag vague items,
+oversized bundles, pre-build setup chores, and disagreements between the two
+plans instead of silently rewriting them. Minor gaps that do not affect scope or
+build order can remain in the final report.
 
-**Stub build plan, real project plan (hard stop).** If `build-plan.md` is still
-the template stub or otherwise placeholder-only while `project-plan.md` §3 lists
-real features, do not generate the overview from `project-plan.md` alone. Derive
-the ordered checklist from `project-plan.md`'s feature list, show it, and on
-approval write it into `build-plan.md` before continuing. This is faithful, not
-invented scope - the features are already the user's, they were just never
-transcribed into the tracked checklist. The overview is generated from
-`build-plan.md`, so `build-plan.md` must hold the real feature checklist first;
-never leave it a stub sitting behind a complete-looking overview.
+**Missing or stub build plan.** If `build-plan.md` is missing, empty, or only
+starter guidance/placeholders while `project-plan.md` lists real features,
+propose a checklist derived from those features and wait for approval before
+writing it. This is reviewed reconciliation, not automatic formatting. If
+neither plan supplies real features, ask the user for their feature list; never
+invent one. Do not generate the overview while the build plan remains missing
+or a stub.
 
-If the build plan is rough but understandable, propose a cleaned-up checkbox
-version and stop for user approval before editing the plan or generating the
-overview. Keep the proposal faithful to the user's scope; sharpen wording and
-split obvious bundles, but do not add new features.
-
-If the user explicitly asked you to clean up the plans in the same request, you
-may update `build-plan.md` after showing the normalized version. Otherwise, stop
-and ask for approval.
-
-If the issues are minor and do not affect build order, continue and list them
-under Open questions or gaps in the final report.
+Save the formatted checklist or approved reconciliation in `build-plan.md`
+before generating the overview. Briefly report any formatting performed.
+Formatting authority does not change Git or other approval gates.
 
 ## Step 3 - synthesize the overview
 
@@ -111,6 +113,7 @@ After the title, write a plan fingerprint in this exact form:
 <!-- blueprint:source-hash <sha256> -->
 ```
 
+Read the final saved plan bytes after any formatting or approved reconciliation.
 Before hashing, normalize only build-plan completion markers by replacing each
 `- [x]` or `- [X]` marker with `- [ ]`, while preserving indentation and every
 other byte. Compute `<sha256>` from the exact UTF-8 bytes of `project-plan.md`,
@@ -139,7 +142,8 @@ time this skill regenerates the overview.
   cannot fit, stop and identify which plan section needs to be split or moved to
   a focused reference instead of writing an oversized overview.
 - **Write one generated context file.** This skill writes
-  `blueprint/context/project-overview.md` and any user-approved plan cleanup only.
+  `blueprint/context/project-overview.md`, the syntax-only build-plan formatting
+  above, and any separately approved plan changes only.
   Never create additional generated context files such as `data-model.md`,
   `architecture.md`, or `open-questions.md` unless the user explicitly requests
   a separately scoped artifact.
@@ -234,16 +238,14 @@ a generated overview or feature work has begun.
 - **Generated, not authored.** Treat `project-overview.md` as a build artifact of
   the two plans. When the plans change, re-run this skill rather than hand-editing
   the overview.
-- **Plans are user-owned.** Do not silently rewrite `project-plan.md` or
-  `build-plan.md`. Propose normalized plan text and stop for approval unless the
-  user explicitly asked you to clean up the plans.
+- **Plans are user-owned.** Automatic formatting changes tracking syntax only.
+  Preserve the user's decisions and existing tracking state. Changes to plan
+  content and missing-plan reconciliation require approval.
 - **Discovery is not a gate.** Never require `/discovery` or treat directly
   written plans as lower quality because the skill was not used.
-- **Build plan must be trackable.** Prefer a numbered checkbox list. If the build
-  plan is raw bullets, or still a stub while `project-plan.md` lists the features,
-  normalize it and write the reconciled checklist back into `build-plan.md` before
-  generating the overview. The real feature list must never live only in the
-  overview - `/feature` reads `build-plan.md`, not the overview.
+- **Build plan must be trackable.** Save the real numbered checklist before
+  generating the overview and its fingerprint. The real feature list must never
+  live only in the overview - `/feature` reads `build-plan.md`, not the overview.
 - **No new scope.** Everything in the overview must trace back to one of the two
   plans. Invented scope is the main failure mode here.
 - **Concrete over vague.** Field-level data models and named routes beat

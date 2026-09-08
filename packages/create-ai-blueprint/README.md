@@ -50,9 +50,11 @@ feature or fix:
 1. Run `/onboard` or `$onboard` to tune Blueprint to the real project.
 2. Write `blueprint/project-plan.md` and `blueprint/build-plan.md` directly, or
    use the optional discovery skill to develop them through conversation.
-3. Run `/overview` or `$overview` to generate durable project context. On the
-   first run, it offers a reviewed local commit for the Blueprint setup and
-   plans.
+   A plain feature list is enough for the build plan.
+3. Run `/overview` or `$overview` to format that list into a tracked checklist
+   without changing its scope or order, then generate durable project context.
+   Formatting needs no extra approval; unclear scope or order does. On the first
+   run, it offers a reviewed local commit for the Blueprint setup and plans.
 4. Run `/feature` or `$feature` for the next planned feature, or use the fix
    skill for a focused bug or small change.
 5. Review the spec, then run `/implement` or `$implement` to build it in small,
