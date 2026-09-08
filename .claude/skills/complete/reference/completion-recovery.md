@@ -175,6 +175,15 @@ identity, execution/context pairing, required Check result, and receipt sections
 The annotation's `head` must equal that target, and its source tree may differ
 from the target only in the original review/findings evidence permitted by Audit.
 Never relabel the receipt as current at the later work commit or merge commit.
+When the original receipt has `Spec snapshot`, preserve that field unchanged.
+After live reset, the hash-proven original archive prefix may establish the same
+spec identity: require its exact digest to equal the receipt's `Spec hash` and the
+annotation's `specSha256`, and require the snapshot field's canonical path to
+contain that original target and hash. This is archived-receipt validation, not
+a current live receipt. Do not create a new snapshot or relabel the target.
+Conflicting retained snapshot bytes or unsafe paths still stop recovery; an
+absent local snapshot may use this exact archive proof after reset. This does
+not replace source-tree/product proof or recover other ignored evidence.
 The narrow completion changes above preserve the reviewed product; any other
 change requires restored exact active inputs and renewed gates/checkpoint/review.
 Never overwrite conflicting live evidence to obtain that restoration.

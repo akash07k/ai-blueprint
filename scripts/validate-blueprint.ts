@@ -428,6 +428,8 @@ async function validateVerificationContract(): Promise<void> {
         "After final Verify and required Check pass, set the active spec to `verified`",
         "Continue to the final packet only with a current passing receipt",
         "never grants commit permission",
+        "local `Spec snapshot` contract without changing visibility",
+        "Do not create an empty commit for ignored spec changes",
         "sole exception is exactly one immutable independent-review checkpoint",
         "receiving current explicit commit approval",
         "Treat an existing request without `Requested execution` as legacy manual-only"
@@ -493,6 +495,13 @@ async function validateVerificationContract(): Promise<void> {
         "read the project-local Audit skill",
         "pending request without `Requested execution` is legacy and manual only",
         "omit `Actual execution`",
+        "create or reuse the exact snapshot first",
+        "Phase B may write only",
+        "same ignored spec/snapshot inputs",
+        "working tree matching the target except existing `blueprint/context/review.md` and `blueprint/context/findings.md` evidence",
+        "tracked, staged, unstaged, or untracked path other than those two evidence paths differs from the target, stop",
+        "Do not create a checkpoint solely for review/findings changes",
+        "normal Phase A exception never allows snapshot Git differences",
         "gate value disables only\nautomatic selection by the workflow"
       ]
     ],
@@ -511,7 +520,17 @@ async function validateVerificationContract(): Promise<void> {
         "never depends on a global role",
         "Legacy receipts with neither execution field",
         "pending request without `Requested execution` is a legacy manual request",
-        "Never auto-upgrade it or send it to a subagent"
+        "Never auto-upgrade it or send it to a subagent",
+        "**Spec snapshot:** blueprint/.state/review-specs/<Target commit>-<Spec hash>.md",
+        "plain path with no backticks",
+        "Never retroactively add `Spec snapshot`",
+        "raw bytes",
+        "ignored and untracked, absent from the index and `Target commit`",
+        "Create the snapshot exclusively",
+        "never overwrite or repair the existing snapshot in place",
+        "Git failure never passes",
+        "A local-spec-only revision may reuse the same approved product HEAD",
+        "Never create an empty commit"
       ]
     ],
     [
@@ -531,6 +550,8 @@ async function validateVerificationContract(): Promise<void> {
         "For requested `automatic`",
         "Continue Complete only with a current passing receipt",
         "pending request without `Requested execution` is legacy",
+        "local `Spec snapshot` contract without changing visibility",
+        "the original `Spec snapshot` field when present",
         "Before requiring a real active spec",
         "reference/completion-recovery.md",
         "NN-name--build-N.md",
@@ -550,6 +571,9 @@ async function validateVerificationContract(): Promise<void> {
         "## Work committed, awaiting merge",
         "## Merge already completed",
         "Never relabel the receipt as current",
+        "hash-proven original archive prefix",
+        "Do not create a new snapshot or relabel the target",
+        "does not replace source-tree/product proof or recover other ignored evidence",
         "Do not force-add ignored workflow files"
       ]
     ],
@@ -599,6 +623,8 @@ async function validateVerificationContract(): Promise<void> {
         "option to walk through the completed code",
         "automatic isolated reviewer",
         "existing configured checkpoint authority",
+        "local `Spec snapshot` contract without changing visibility",
+        "Do not create an empty commit for ignored spec changes",
         "The request records `Requested execution`",
         "pending request without `Requested execution` is legacy manual-only"
       ]
@@ -611,6 +637,8 @@ async function validateVerificationContract(): Promise<void> {
         "Never push the default branch",
         "required immutable independent-review checkpoints",
         "automatic capability cannot prove isolation",
+        "local `Spec snapshot` contract without changing visibility",
+        "Do not create an empty commit for ignored spec changes",
         "The request records `Requested execution`",
         "pending request without `Requested execution` is legacy manual-only",
         "../complete/reference/completion-recovery.md",

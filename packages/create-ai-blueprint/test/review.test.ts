@@ -158,6 +158,19 @@ test("parseIndependentReview rejects incomplete receipts", () => {
   assert.equal(review.warnings[0]?.code, "malformed_review");
 });
 
+test("parseIndependentReview accepts only one canonical optional spec snapshot", () => {
+  const snapshot = `blueprint/.state/review-specs/${TARGET}-${SPEC_HASH}.md`;
+  const withSnapshot = (value: string) => reviewRecord("pending").replace(
+    "**Prepared by:**", `**Spec snapshot:** ${value}\n**Prepared by:**`
+  );
+  assert.equal(parseIndependentReview(withSnapshot(snapshot)).specSnapshot, snapshot);
+  assert.equal(parseIndependentReview(reviewRecord("pending")).specSnapshot, null);
+  for (const value of ["", "/tmp/spec.md", `../${snapshot}`, `${snapshot}/../spec.md`, snapshot.replace(TARGET, BASE)]) {
+    assert.equal(parseIndependentReview(withSnapshot(value)).state, "malformed", value);
+  }
+  assert.equal(parseIndependentReview(withSnapshot(`${snapshot}\n**Spec snapshot:** ${snapshot}`)).state, "malformed");
+});
+
 test("parseIndependentReview rejects an unsupported reviewer context", () => {
   const review = parseIndependentReview(
     reviewRecord("passed", true).replace(
@@ -300,6 +313,128 @@ test("readIndependentReview rejects an incorrect base and reviewer model", async
   assert.equal((await readIndependentReview(projectRoot)).freshness, "current");
 });
 
+test("readIndependentReview binds an ignored Unicode CRLF spec to exact local bytes", async (t) => {
+  const fixture = await createLocalReview(t);
+  const review = await readIndependentReview(fixture.projectRoot);
+
+  assert.equal(review.state, "passed");
+  assert.equal(review.freshness, "current");
+  assert.equal(review.specSnapshot, fixture.snapshot);
+  assert.deepEqual(await fs.readFile(fixture.snapshotPath), fixture.spec);
+  assert.equal(await runGit(fixture.projectRoot, ["ls-files", "--", fixture.specPath, fixture.snapshotPath]), "");
+  assert.equal(await runGit(fixture.projectRoot, ["ls-tree", fixture.target, "--", "blueprint/context/current-feature.md", fixture.snapshot]), "");
+
+  await fs.writeFile(fixture.reviewPath, fixture.record.replace(`**Spec snapshot:** ${fixture.snapshot}\n`, ""));
+  assert.equal((await readIndependentReview(fixture.projectRoot)).freshness, "current", "legacy no-snapshot acceptance is unchanged");
+});
+
+test("readIndependentReview rejects changed or missing snapshot inputs", async (t) => {
+  for (const input of ["specPath", "snapshotPath"] as const) {
+    for (const change of ["mutated", "missing", "directory"]) {
+      await t.test(`${input} ${change}`, async (t) => {
+        const fixture = await createLocalReview(t);
+        if (change === "mutated") {
+          await fs.writeFile(fixture[input], fixture.spec.toString("utf8").replaceAll("\r\n", "\n"));
+        } else {
+          await fs.unlink(fixture[input]);
+          if (change === "directory") await fs.mkdir(fixture[input]);
+        }
+        assert.equal((await readIndependentReview(fixture.projectRoot)).freshness, "stale");
+      });
+    }
+  }
+});
+
+test("readIndependentReview rejects symbolic-link local inputs and parents", async (t) => {
+  const inputs = [
+    ["spec", "blueprint/context/current-feature.md", "file"],
+    ["snapshot", "snapshot", "file"],
+    ["context", "blueprint/context", "dir"],
+    ["state", "blueprint/.state", "dir"],
+    ["review-specs", "blueprint/.state/review-specs", "dir"],
+    ["root", "", "dir"],
+    ["dangling", "snapshot", "file"]
+  ] as const;
+  for (const [input, relative, type] of inputs) {
+    await t.test(input, async (t) => {
+      const fixture = await createLocalReview(t);
+      const outside = await fs.mkdtemp(path.join(os.tmpdir(), "blueprint-review-outside-"));
+      t.after(() => fs.rm(outside, { recursive: true, force: true }));
+      const original = relative === "snapshot" ? fixture.snapshotPath : path.join(fixture.projectRoot, relative);
+      if (input === "root") {
+        const alias = path.join(outside, "project");
+        await fs.symlink(original, alias, "dir");
+        assert.equal((await readIndependentReview(alias)).freshness, "stale");
+      } else {
+        const moved = path.join(outside, "input");
+        await fs.rename(original, moved);
+        await fs.symlink(input === "dangling" ? path.join(outside, "absent") : moved, original, type);
+        assert.equal((await readIndependentReview(fixture.projectRoot)).freshness, "stale");
+      }
+    });
+  }
+});
+
+test("readIndependentReview requires ignored and untracked snapshot inputs", async (t) => {
+  for (const input of ["specPath", "snapshotPath"] as const) {
+    await t.test(`indexed ${input}`, async (t) => {
+      const fixture = await createLocalReview(t);
+      await runGit(fixture.projectRoot, ["add", "-f", "--", fixture[input]]);
+      assert.equal((await readIndependentReview(fixture.projectRoot)).freshness, "stale");
+    });
+    await t.test(`unignored ${input}`, async (t) => {
+      const fixture = await createLocalReview(t);
+      await fs.writeFile(path.join(fixture.projectRoot, ".git", "info", "exclude"),
+        input === "specPath" ? "/blueprint/.state/review-specs/\n" : "/blueprint/context/current-feature.md\n");
+      assert.equal((await readIndependentReview(fixture.projectRoot)).freshness, "stale");
+    });
+  }
+});
+
+test("readIndependentReview rejects a spec contained in the product checkpoint", async (t) => {
+  const projectRoot = await createProject(t, true);
+  await runGit(projectRoot, ["add", "-f", "blueprint/context/current-feature.md"]);
+  await runGit(projectRoot, ["commit", "-m", "test: tracked local spec"]);
+  const fixture = await writeLocalReview(projectRoot, "passed");
+  await runGit(projectRoot, ["rm", "--cached", "blueprint/context/current-feature.md"]);
+
+  assert.equal(await runGit(projectRoot, ["ls-files", "--", fixture.specPath]), "");
+  assert.notEqual(await runGit(projectRoot, ["ls-tree", fixture.target, "--", "blueprint/context/current-feature.md"]), "");
+  assert.equal((await readIndependentReview(projectRoot)).freshness, "stale");
+});
+
+test("local spec-only rereview uses a new snapshot and request at the same product HEAD", async (t) => {
+  const original = await createLocalReview(t);
+  await fs.appendFile(original.specPath, "\r\nRequire accessible labels.\r\n");
+  assert.equal((await readIndependentReview(original.projectRoot)).freshness, "stale");
+  const pending = await writeLocalReview(original.projectRoot, "pending");
+  assert.equal(pending.target, original.target);
+  assert.notEqual(pending.snapshot, original.snapshot);
+  assert.deepEqual(await fs.readFile(original.snapshotPath), original.spec);
+  assert.equal((await readIndependentReview(original.projectRoot)).state, "pending");
+  assert.equal((await readIndependentReview(original.projectRoot)).freshness, "current");
+
+  const passed = reviewRecord("passed", true)
+    .replaceAll(TARGET, pending.target).replaceAll(BASE, pending.base).replaceAll(SPEC_HASH, pending.specHash)
+    .replace("**Prepared by:**", `**Spec snapshot:** ${pending.snapshot}\n**Prepared by:**`);
+  await fs.writeFile(pending.reviewPath, passed);
+  assert.equal((await readIndependentReview(original.projectRoot)).freshness, "current");
+  await fs.appendFile(path.join(original.projectRoot, "src.ts"), "export const drift = true;\n");
+  assert.equal((await readIndependentReview(original.projectRoot)).freshness, "stale");
+  await runGit(original.projectRoot, ["add", "src.ts"]);
+  await runGit(original.projectRoot, ["commit", "-m", "test: later product work"]);
+  assert.equal((await readIndependentReview(original.projectRoot)).freshness, "stale");
+});
+
+test("a local snapshot does not bypass changed base evidence or Git failures", async (t) => {
+  const fixture = await createLocalReview(t);
+  await runGit(fixture.projectRoot, ["update-ref", "refs/heads/main", fixture.target]);
+  assert.equal((await readIndependentReview(fixture.projectRoot)).freshness, "stale");
+  await runGit(fixture.projectRoot, ["update-ref", "refs/heads/main", fixture.base]);
+  await fs.rename(path.join(fixture.projectRoot, ".git"), path.join(fixture.projectRoot, "git-unavailable"));
+  assert.notEqual((await readIndependentReview(fixture.projectRoot)).freshness, "current");
+});
+
 function reviewRecord(
   status: "changes-requested" | "passed" | "pending",
   completed = false,
@@ -350,7 +485,30 @@ ${execution?.actual ? `**Actual execution:** ${execution.actual}\n` : ""}**Revie
 ` : ""}`;
 }
 
-async function createProject(t: TestContext): Promise<string> {
+async function createLocalReview(t: TestContext) {
+  const projectRoot = await createProject(t, true);
+  return writeLocalReview(projectRoot, "passed");
+}
+
+async function writeLocalReview(projectRoot: string, state: "passed" | "pending") {
+  const specPath = path.join(projectRoot, "blueprint/context/current-feature.md");
+  const spec = await fs.readFile(specPath);
+  const specHash = createHash("sha256").update(spec).digest("hex");
+  const target = await runGit(projectRoot, ["rev-parse", "HEAD"]);
+  const base = await runGit(projectRoot, ["rev-parse", "main"]);
+  const snapshot = `blueprint/.state/review-specs/${target}-${specHash}.md`;
+  const snapshotPath = path.join(projectRoot, snapshot);
+  const reviewPath = path.join(projectRoot, "blueprint/context/review.md");
+  await fs.mkdir(path.dirname(snapshotPath), { recursive: true });
+  await fs.writeFile(snapshotPath, spec, { flag: "wx" });
+  const record = reviewRecord(state, state === "passed")
+    .replaceAll(TARGET, target).replaceAll(BASE, base).replaceAll(SPEC_HASH, specHash)
+    .replace("**Prepared by:**", `**Spec snapshot:** ${snapshot}\n**Prepared by:**`);
+  await fs.writeFile(reviewPath, record);
+  return { projectRoot, specPath, spec, specHash, target, base, snapshot, snapshotPath, reviewPath, record };
+}
+
+async function createProject(t: TestContext, localSpec = false): Promise<string> {
   const projectRoot = await fs.mkdtemp(path.join(os.tmpdir(), "blueprint-review-"));
   const contextRoot = path.join(projectRoot, "blueprint", "context");
   t.after(() => fs.rm(projectRoot, { recursive: true, force: true }));
@@ -358,7 +516,9 @@ async function createProject(t: TestContext): Promise<string> {
   await fs.mkdir(contextRoot, { recursive: true });
   await fs.writeFile(
     path.join(contextRoot, "current-feature.md"),
-    "# Feature: Review receipt\n\n**Status:** in progress\n"
+    localSpec
+      ? "# Feature: Résumé export\r\n\r\n**Status:** verified\r\n\r\n- [x] Preserve café ☕ labels.\r\n"
+      : "# Feature: Review receipt\n\n**Status:** in progress\n"
   );
   await fs.writeFile(path.join(contextRoot, "findings.md"), "# Findings\n");
   await fs.writeFile(
@@ -369,6 +529,13 @@ async function createProject(t: TestContext): Promise<string> {
   await runGit(projectRoot, ["init", "-b", "main"]);
   await runGit(projectRoot, ["config", "user.email", "review@example.com"]);
   await runGit(projectRoot, ["config", "user.name", "Review Test"]);
+  await runGit(projectRoot, ["config", "core.autocrlf", "false"]);
+  await runGit(projectRoot, ["config", "commit.gpgsign", "false"]);
+  await runGit(projectRoot, ["config", "core.hooksPath", path.join(projectRoot, "no-hooks")]);
+  if (localSpec) {
+    await fs.writeFile(path.join(projectRoot, ".git", "info", "exclude"),
+      "/blueprint/context/current-feature.md\n/blueprint/.state/review-specs/\n");
+  }
   await runGit(projectRoot, ["add", "."]);
   await runGit(projectRoot, ["commit", "-m", "chore: create review fixture"]);
   await runGit(projectRoot, ["switch", "-c", "feature/review"]);

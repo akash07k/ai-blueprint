@@ -211,8 +211,10 @@ Check, and the verified spec, before the final review packet and `/complete`.
 `review.independentExecution` chooses the manual fresh-session handoff or an
 automatic isolated reviewer; it does not change when the gate is selected.
 
-When selected, do not review the builder's work in this session. Ensure all work
-is in an approved clean checkpoint, then follow Phase A of
+When selected, do not review the builder's work in this session. Ensure
+application code is in an approved clean checkpoint. Include the verified spec
+when tracked; an intentionally ignored spec uses Audit's local `Spec snapshot`
+contract without changing visibility. Then follow Phase A of
 `/audit independent current`. With automatic execution, spawn and wait for the
 isolated reviewer, then validate its normal receipt. With manual execution, stop
 with the handoff. Autopilot may use its existing configured checkpoint authority
@@ -221,7 +223,12 @@ candidate and ask before committing. On resume, continue only when a fresh
 reviewer wrote a current `passed` receipt. Repair `changes-requested` P0/P1
 findings within the normal scope and attempt limit, then obtain a new checkpoint
 and prepare a new review. A passing independent receipt satisfies the configured
-Audit gate.
+Audit gate. A local-spec-only revision may reuse the same approved product HEAD
+after normal spec and verification gates, with a new snapshot/request and full
+fresh review. Do not create an empty commit for ignored spec changes. Automatic
+execution must also confirm access to the same local spec/snapshot and installed
+skills; otherwise retain the request and use the manual handoff in the original
+checkout.
 
 The request records `Requested execution`; the receipt records `Actual
 execution`. Require the execution and reviewer-context pairing defined by the

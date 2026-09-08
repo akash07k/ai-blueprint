@@ -127,19 +127,23 @@ final packet:
 
 1. If `qualityGates.regular.independentReview` does not select review and no
    request already exists, proceed directly to the final review packet.
-2. Otherwise show the exact product, test, and verified-spec candidate for the
-   immutable review checkpoint. Obtain explicit commit approval when the exact
-   checkpoint does not already exist, then create or use it. Configuration,
-   including `review.independentExecution: "automatic"`, never grants commit
-   permission, even when normal checkpoint commits are disabled.
+2. Otherwise show the exact product/test checkpoint candidate and verified spec.
+   Include the spec when tracked; an intentionally ignored spec uses Audit's
+   local `Spec snapshot` contract without changing visibility. Obtain explicit
+   commit approval when the exact checkpoint does not already exist, then create
+   or use it. Configuration, including `review.independentExecution: "automatic"`,
+   never grants commit permission, even when normal checkpoint commits are disabled.
+   A local-spec-only revision may reuse the same approved product HEAD after
+   normal spec and verification gates, with a new snapshot/request and full
+   fresh review. Do not create an empty commit for ignored spec changes.
 3. Follow `/audit independent current` to prepare or reuse the request and record
    `Requested execution`. For requested `automatic`, start and wait for the
    generic isolated current-runtime child instructed from the project-local
    Audit skill, then validate the receipt. For requested `manual`, or when
-   automatic capability is unavailable, preserve the request and stop with the
-   manual fresh-session handoff. Treat an existing request without `Requested
-   execution` as legacy manual-only: never add execution fields or run a
-   subagent against it.
+   automatic capability or access to the same local spec/snapshot is unavailable,
+   preserve the request and stop with the manual fresh-session handoff. Treat an
+   existing request without `Requested execution` as legacy manual-only:
+   never add execution fields or run a subagent against it.
 4. Continue to the final packet only with a current passing receipt whose
    requested execution, actual execution, and reviewer context form an allowed
    pairing. Never self-review or silently skip a selected gate.

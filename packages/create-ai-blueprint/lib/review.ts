@@ -27,6 +27,7 @@ interface IndependentReviewSummary {
   baseCommit: string | null;
   baseRef: string | null;
   specHash: string | null;
+  specSnapshot: string | null;
   preparedBy: ReviewAdapter | null;
   builderModel: string | null;
   requestedReviewer: ReviewAdapter | null;
@@ -104,10 +105,13 @@ function parseIndependentReview(markdown: string): IndependentReviewSummary {
   }
 
   const fields = new Map<string, string>();
+  let snapshotFields = 0;
   for (const line of markdown.split(/\r?\n/)) {
     const match = line.match(FIELD_PATTERN);
     if (match?.[1]) {
-      fields.set(normalizeLabel(match[1]), (match[2] || "").trim());
+      const label = normalizeLabel(match[1]);
+      fields.set(label, (match[2] || "").trim());
+      if (label === "spec snapshot") snapshotFields += 1;
     }
   }
 
@@ -116,6 +120,11 @@ function parseIndependentReview(markdown: string): IndependentReviewSummary {
   const baseCommit = normalizeHash(fields.get("base commit"), FULL_SHA_PATTERN);
   const baseRef = normalizeBaseRef(fields.get("base ref"));
   const specHash = normalizeHash(fields.get("spec hash"), HASH_PATTERN);
+  const snapshotValue = fields.get("spec snapshot");
+  const specSnapshot = targetCommit && specHash &&
+    snapshotValue === `blueprint/.state/review-specs/${targetCommit}-${specHash}.md`
+    ? snapshotValue
+    : null;
   const preparedBy = normalizeAdapter(fields.get("prepared by"));
   const builderModel = normalizeText(fields.get("builder model"));
   const requestedReviewer = normalizeAdapter(fields.get("requested reviewer"));
@@ -147,6 +156,7 @@ function parseIndependentReview(markdown: string): IndependentReviewSummary {
     baseCommit !== null &&
     baseRef !== null &&
     specHash !== null &&
+    (snapshotValue === undefined || (snapshotFields === 1 && specSnapshot !== null)) &&
     preparedBy !== null &&
     builderModel !== null &&
     requestedReviewer !== null &&
@@ -193,6 +203,7 @@ function parseIndependentReview(markdown: string): IndependentReviewSummary {
     baseCommit,
     baseRef,
     specHash,
+    specSnapshot,
     preparedBy,
     builderModel,
     requestedReviewer,
@@ -241,7 +252,9 @@ async function determineFreshness(
 
   const [head, currentWork, mergeBase, permittedBaseRefs] = await Promise.all([
     runOptionalGit(projectRoot, ["rev-parse", "HEAD"]),
-    readOptionalRegularFile(path.join(projectRoot, CURRENT_WORK_PATH)),
+    review.specSnapshot
+      ? readLocalSpecSnapshot(projectRoot, review)
+      : readOptionalRegularFile(path.join(projectRoot, CURRENT_WORK_PATH)),
     runOptionalGit(projectRoot, [
       "merge-base",
       review.baseRef,
@@ -250,7 +263,11 @@ async function determineFreshness(
     readPermittedBaseRefs(projectRoot)
   ]);
 
-  if (!head || currentWork === null) {
+  if (currentWork === null) {
+    return review.specSnapshot ? "stale" : "unknown";
+  }
+
+  if (!head) {
     return "unknown";
   }
 
@@ -269,6 +286,46 @@ async function determineFreshness(
 
   const relevantDiff = await hasRelevantDiff(projectRoot, review.targetCommit);
   return relevantDiff === null ? "unknown" : relevantDiff ? "stale" : "current";
+}
+
+async function readLocalSpecSnapshot(
+  projectRoot: string,
+  review: IndependentReviewSummary
+): Promise<Buffer | null> {
+  if (!review.specSnapshot || !review.targetCommit || !review.specHash) return null;
+
+  try {
+    const root = path.resolve(projectRoot);
+    if (!(await fs.lstat(root)).isDirectory()) return null;
+
+    const files = [CURRENT_WORK_PATH, review.specSnapshot];
+    for (const file of files) {
+      let directory = root;
+      for (const part of file.split(/[\\/]/).slice(0, -1)) {
+        directory = path.join(directory, part);
+        if (!(await fs.lstat(directory)).isDirectory()) return null;
+      }
+      if (!(await fs.lstat(path.join(root, file))).isFile()) return null;
+    }
+
+    const [indexed, committed, ...ignored] = await Promise.all([
+      runOptionalGit(root, ["ls-files", "--stage", "--", ...files]),
+      runOptionalGit(root, ["ls-tree", "-z", review.targetCommit, "--", ...files]),
+      ...files.map((file) => runOptionalGit(root, [
+        "check-ignore", "--no-index", "--quiet", "--", file
+      ]))
+    ]);
+    if (indexed !== "" || committed !== "" || ignored.some((result) => result === null)) {
+      return null;
+    }
+
+    const contents = await Promise.all(files.map((file) => fs.readFile(path.join(root, file))));
+    return contents.every((bytes) => createHash("sha256").update(bytes).digest("hex") === review.specHash)
+      ? contents[0] ?? null
+      : null;
+  } catch {
+    return null;
+  }
 }
 
 async function hasRelevantDiff(
@@ -522,6 +579,7 @@ function emptySummary(): IndependentReviewSummary {
     baseCommit: null,
     baseRef: null,
     specHash: null,
+    specSnapshot: null,
     preparedBy: null,
     builderModel: null,
     requestedReviewer: null,

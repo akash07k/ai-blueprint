@@ -91,20 +91,26 @@ If a selected or previously initiated independent review does not already have a
 current passing receipt:
 
 1. Use an existing current pending request and its immutable target when one is
-   present. Otherwise show the exact product, test, and verified-spec candidate
-   for the immutable review checkpoint. Obtain explicit commit approval under
-   the normal Git rules, then create or use that clean checkpoint. Configuration,
+   present. Otherwise show the exact product/test checkpoint candidate and
+   verified spec. Include the spec when tracked; an intentionally ignored spec
+   uses Audit's local `Spec snapshot` contract without changing visibility.
+   Obtain explicit commit approval when the exact checkpoint does not already
+   exist, then create or use it under the normal Git rules. Configuration,
    including `review.independentExecution: "automatic"`, never grants permission
    to commit. A pending request without `Requested execution` is legacy and
    manual-only; never add execution fields or run a subagent against it.
+   A local-spec-only revision may reuse the same approved product HEAD after
+   normal spec and verification gates, with a new snapshot/request and full
+   fresh review. Do not create an empty commit for ignored spec changes.
 2. Prepare Phase A of `/audit independent current` when no current request
    exists. Record `Requested execution` from `review.independentExecution`.
 3. For requested `automatic`, start the generic isolated current-runtime child
    from the installed project-local Audit skill, wait, and validate the normal
    receipt. Freeze parent product, test, spec, and config changes while it runs.
-4. For requested `manual`, or when automatic isolation, identity, model, or
-   completion is unavailable, preserve the pending request, set activity to
-   `ready`, and stop with the manual fresh-session handoff.
+4. For requested `manual`, or when automatic isolation, identity, model,
+   completion, or access to the same local spec/snapshot is unavailable,
+   preserve the pending request, set activity to `ready`, and stop with the
+   manual fresh-session handoff.
 5. Continue Complete only with a current passing receipt whose requested and
    actual execution fields match the allowed review contract. Never self-review
    or silently skip the gate.
@@ -136,6 +142,8 @@ Before logging or committing, run a short safety pass and report blockers only:
   non-empty, and whose target has no later changes except the review and
   findings files. Apply the same checks to any explicit receipt even when the
   configured policy is `manual`. Any mismatch is stale and blocks completion.
+  When `Spec snapshot` is present, also require its exact local bytes, path,
+  visibility, and Git conditions from Audit's reference contract to remain valid.
 - when a passing independent receipt exists, the active spec is already
   `verified` and remains byte-for-byte unchanged through archival
 - if workflow files changed, `.agents` and `.claude` stayed in sync where both
@@ -219,9 +227,10 @@ append it to the archive or remove it from the live ledger.
 a `## Independent review` section in the prepared archive with the receipt fields,
 commands, safe evidence references, findings, and remaining risk from
 `blueprint/context/review.md`. Preserve the full target and base SHAs, spec
-hash, base ref, builder adapter and model, requested reviewer, model, and
-execution, actual reviewer adapter, model, and execution, Check result,
-fresh-context declaration, and review time. Do not archive a stale, pending,
+hash, the original `Spec snapshot` field when present, base ref, builder adapter
+and model, requested reviewer, model, and execution, actual reviewer adapter,
+model, and execution, Check result, fresh-context declaration, and review time.
+Do not archive a stale, pending,
 changes-requested, or malformed record.
 
 Validate and place the fully assembled archive first. Complete only the exact

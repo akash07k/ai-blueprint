@@ -223,19 +223,25 @@ feature and clearly required by project standards. Never mark a finding
 
 Any P0 or P1 left `open` or `fixed` stops the loop before completion.
 
-When independent review is selected, ensure the feature is in a clean immutable
-checkpoint. First rerun final verification and the selected Check gate, set the
-spec status to `verified`, and include that exact spec in the checkpoint. This
-review checkpoint is covered by Continuous Mode's scoped local lifecycle
-authority even when step checkpoint commits are disabled. Then follow
+When independent review is selected, ensure application code is in a clean
+immutable checkpoint. First rerun final verification and the selected Check
+gate and set the spec status to `verified`. Include the exact spec when tracked;
+an intentionally ignored spec uses Audit's local `Spec snapshot` contract
+without changing visibility. This review checkpoint is covered by Continuous
+Mode's scoped local lifecycle authority even when step checkpoint commits are
+disabled. Then follow
 `/audit independent current`. With `review.independentExecution: "automatic"`,
 spawn and wait for the isolated reviewer and validate its normal receipt before
 continuing. With `manual`, or when automatic capability cannot prove isolation,
-identity, model, and completion, set activity to `ready` and stop with the
-manual handoff. Continuous Mode never performs its own independent review. On
-`/continuous resume`, continue only with a current `passed` receipt. For
+identity, model, completion, or access to the same local spec/snapshot, set
+activity to `ready` and stop with the manual handoff. Continuous Mode never
+performs its own independent review. On `/continuous resume`, continue only with
+a current `passed` receipt. For
 `changes-requested`, repair within the configured attempt limit, obtain a new
 checkpoint, and review the whole new target again.
+A local-spec-only revision may reuse the same approved product HEAD after normal
+spec and verification gates, with a new snapshot/request and full fresh review.
+Do not create an empty commit for ignored spec changes.
 
 The request records `Requested execution`; the receipt records `Actual
 execution`. Require the execution and reviewer-context pairing defined by the
