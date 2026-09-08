@@ -136,6 +136,31 @@ test("readHistory reads feature, fix, and rollback archives", async (t) => {
   );
 });
 
+test("readHistory retains a Build 2 title and renamed rebuild under the same lettered feature ID", async (t) => {
+  const projectRoot = await createProject(t);
+  const builds = [
+    { file: "12a-export-build-2.md", title: "Export Build 2", attempt: "" },
+    { file: "12a-export--build-2.md", title: "Export", attempt: "**Build attempt:** 2\n" }
+  ];
+  for (const build of builds) {
+    await fs.writeFile(
+      path.join(projectRoot, "blueprint", "history", "features", build.file),
+      `# Feature: ${build.title}\n\n**From build-plan:** feature 12a\n${build.attempt}**Status:** verified\n`
+    );
+  }
+
+  const history = await readHistory(projectRoot);
+  const rebuiltFeature = history.items.filter((item) => item.buildPlanItem === "12a");
+
+  assert.equal(history.total, 5);
+  assert.deepEqual(
+    rebuiltFeature.map(({ file, title, type, status }) => ({ file, title, type, status }))
+      .sort((a, b) => a.file.localeCompare(b.file)),
+    builds.map(({ file, title }) => ({ file: `features/${file}`, title, type: "feature", status: "verified" }))
+      .sort((a, b) => a.file.localeCompare(b.file))
+  );
+});
+
 test("readHistory does not follow a symbolic-link history directory", async (t) => {
   const projectRoot = await fs.mkdtemp(path.join(os.tmpdir(), "blueprint-history-project-"));
   const outsideRoot = await fs.mkdtemp(path.join(os.tmpdir(), "blueprint-history-outside-"));

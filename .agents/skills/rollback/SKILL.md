@@ -57,16 +57,23 @@ skill.
 
 ## Step 1 - resolve the exact feature
 
-Match the requested number or name against both the checked build-plan items and
-`blueprint/history/features/*.md`. Exclude the directory README.
+Resolve the requested number or name to one checked build-plan ID; for an archive
+path, read its exact spec identity first and match that checked item. Then gather
+all exact-ID feature archive candidates using `../feature/reference/build-history.md`.
+Normalize the stable ID, retaining its letter, and read attempts from verified
+spec metadata/history proof, never arbitrary title or filename suffixes.
 
-Use the archive path to locate the commit that added it:
+For each candidate, require its unique introducing commit on the local default
+and prove the archive blob and mode have not changed since that addition. Exclude
+builds with a proven completed reachable rollback naming that exact archive and
+introducing commit. The checked item must have exactly one unreversed build.
+An explicit archive request stays bound to that exact path: reject it if already
+reversed, rather than silently choosing another build. Ambiguous, orphan,
+overwritten, multiply-added, or missing records stop with their exact paths and
+missing proof. Do not select by newest commit, filename order, or rollback date.
 
-    git log --diff-filter=A --format="%H %s" HEAD -- <archive-path>
-
-Use the newest matching commit reachable from the current branch. Confirm the
-archive was added by that commit and its subject and diff are consistent with the
-requested feature. If the target is a merge commit, stop before Step 2 and before
+Confirm the selected commit's diff is consistent with the requested feature.
+If the target is a merge commit, stop before Step 2 and before
 writing or changing `blueprint/context/current-feature.md`. Do not record a
 target parent or choose a mainline. Publish `blocked` to
 `blueprint/.state/run.json`, explain that Blueprint cannot safely infer which
@@ -125,7 +132,7 @@ Write `blueprint/context/current-feature.md` using
 `**Type:** Rollback` contract. Fill in:
 
 - the full rollback branch from the configured prefix plus the rollback title in
-  lowercase kebab-case
+  lowercase kebab-case, appending `--build-N` for target attempt N > 1 proved above
 - target feature and archive
 - target commit and parent commit as full 40-character SHA values
 - user's reason
@@ -134,6 +141,12 @@ Write `blueprint/context/current-feature.md` using
 - later commits reviewed and the risk classification
 - compatibility work that is allowed, if any
 - exact verification commands and observable removal criteria
+
+Before freezing a new rollback spec, apply the archive-path and branch-availability
+checks in `../feature/reference/build-history.md` to its planned branch and
+`YYYY-MM-DD-<exact-target-archive-stem>.md` destination. Retain `--build-N` in the
+target stem when present. A collision stops for an explicit decision; never
+renumber the target or silently rename reviewed work. Existing completion recovery runs first.
 
 The first build step must apply the target commit's product diff in reverse using
 the guarded Type: Rollback behavior in `/implement`. Later steps may repair only

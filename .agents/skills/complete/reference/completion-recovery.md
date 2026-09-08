@@ -70,6 +70,11 @@ Do not append sections incrementally to an existing archive during recovery.
 
 ## Screen candidates read-only
 
+Before matching a reused feature branch, apply the historical-build exclusion
+below. Do not treat a proved prior reversed build as pending completion of its
+replacement. If that exclusion cannot be proved, retain the candidate and stop
+for full proof rather than guessing from a different spec or archive name.
+
 Inspect current branch, `git status --porcelain=v1`, live spec/review and plan
 consistency, and relevant annotated archives. Check recorded local work refs with
 `git show-ref --verify --quiet <branch>`. A matching work branch/archive, a retained
@@ -88,9 +93,34 @@ live state too. Missing objects still block actual recovery and explicit resume.
 
 ## Prove an actual recovery candidate
 
+For feature archives on a reused branch, exclude a prior build only when all of
+these read-only Git checks pass:
+
+- `../../feature/reference/build-history.md` proves its unique unchanged archive
+  addition on the local default, and the introducing commit's sole parent equals
+  that archive annotation's `baseCommit` on the same `baseRef`.
+- An exact completed, unchanged, reachable rollback record names that archive and
+  introducing commit; its commit is after the feature addition.
+- The current work branch descends from a post-rollback local default: that
+  rollback commit is an ancestor of the merge base of the current work branch
+  and local default. Its old archive remains byte/mode-identical in both trees
+  and the working tree, with no pending archive edits or retained review explicitly
+  targeting that old build.
+
+Different spec bytes, title, attempt, filename, or ancestry alone never exclude
+an archive. Missing, changed, or contradictory proof stops; this exception does
+not recover old missing inputs or waive current gates. It permits legacy branch
+reuse only after the old lifecycle is demonstrably finished and reversed.
+
 Require one annotated archive matching the recorded work branch, or the exact
 archive/commit proof in the merged phase below. A real live spec must match its
 recovered bytes; the canonical stub is also expected. A different spec conflicts.
+For features, use the recovered spec's frozen `**Build attempt:**` and that exact
+archive path; never allocate a new attempt on resume. For a legacy feature spec
+without the field, the path plus existing annotation fixes the destination only
+after the prior-build proof in `../../feature/reference/build-history.md` at its
+recorded `baseCommit` uniquely establishes its attempt. Exclude the current archive from those prior
+builds. Do not edit the recovered bytes to insert metadata.
 
 Require all recorded commits and `sourceTree` to exist (`git cat-file -e`).
 Unreferenced source trees can be pruned by Git: missing objects stop recovery;

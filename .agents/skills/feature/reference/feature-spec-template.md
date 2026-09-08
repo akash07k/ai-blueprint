@@ -1,6 +1,7 @@
 # Feature: <name>
 
 **From build-plan:** feature <n>
+**Build attempt:** <positive integer, starting at 1>
 **Status:** not started
 **Branch:** `feature/<name>`
 

@@ -452,9 +452,24 @@ async function validateVerificationContract(): Promise<void> {
         "Write the final spec once",
         "# Feature: <title>",
         "**From build-plan:** feature <id>",
+        "**Build attempt:** <positive integer>",
+        "reference/build-history.md",
+        "feature/export-reports--build-2",
         "Record `**Branch:**` with the",
         "Do not bury repair inside this feature",
         "Never implement from this skill"
+      ]
+    ],
+    [
+      ".agents/skills/feature/reference/build-history.md",
+      [
+        "max(attempts) + 1",
+        "unique introducing commit",
+        "**Target archive:**",
+        "**Target commit:**",
+        "Ignored local-only history",
+        "git log --all --reflog --full-history",
+        "including a dangling symlink"
       ]
     ],
     [
@@ -517,7 +532,9 @@ async function validateVerificationContract(): Promise<void> {
         "Continue Complete only with a current passing receipt",
         "pending request without `Requested execution` is legacy",
         "Before requiring a real active spec",
-        "reference/completion-recovery.md"
+        "reference/completion-recovery.md",
+        "NN-name--build-N.md",
+        "12-build-2/F-03"
       ]
     ],
     [
@@ -527,6 +544,8 @@ async function validateVerificationContract(): Promise<void> {
         '"sourceTree"',
         '"absentOptional"',
         "## Screen candidates read-only",
+        "historical-build exclusion",
+        "never allocate a new attempt on resume",
         "## Interrupted archival, before the work commit",
         "## Work committed, awaiting merge",
         "## Merge already completed",
@@ -548,7 +567,9 @@ async function validateVerificationContract(): Promise<void> {
         "writing or changing `blueprint/context/current-feature.md`",
         "Publish `blocked` to",
         "Do not record a target parent or choose a mainline",
-        "retains its merge-target stop as defense in depth"
+        "retains its merge-target stop as defense in depth",
+        "exactly one unreversed build",
+        "../feature/reference/build-history.md"
       ]
     ],
     [
@@ -593,7 +614,8 @@ async function validateVerificationContract(): Promise<void> {
         "The request records `Requested execution`",
         "pending request without `Requested execution` is legacy manual-only",
         "../complete/reference/completion-recovery.md",
-        "never counts the same completion twice"
+        "never counts the same completion twice",
+        "Use the exact `**Branch:**` frozen in the spec"
       ]
     ],
     [

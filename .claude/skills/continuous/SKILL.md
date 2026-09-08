@@ -141,9 +141,12 @@ decision. Stop with the exact decision needed.
 
 ### 2.2 Create or resume the feature branch
 
-Use `git.featureBranchPrefix` from config and a name derived from the spec.
-Create the branch from the current local default branch. When resuming, require
-the existing branch, active spec, and branch prefix to agree.
+Use the exact `**Branch:**` frozen in the spec, including its `**Build attempt:**`
+suffix when applicable; do not derive a new branch or attempt from the title.
+Validate it against `git.featureBranchPrefix` and Feature's history rules, then
+create it from the current local default branch. When resuming, require the
+existing branch and active spec to agree; keep Complete's legacy attempt handling
+for older specs rather than renaming a reviewed branch.
 
 If switching would strand unrelated work or the default branch changed in a way
 that makes the active branch unsafe to integrate, stop. Never stash, reset, or
@@ -254,7 +257,8 @@ For the finished feature:
    receipt exists, do not rewrite the reviewed spec before archival.
 3. Confirm all steps are checked, configured gates ran, no unrelated files are
    mixed in, adapters remain aligned, and no P0/P1 blocker remains.
-4. Capture Complete's source-tree/annotation proof before any logging edits.
+4. Reuse the spec's frozen build attempt and exact Complete archive destination.
+   Capture Complete's source-tree/annotation proof before any logging edits.
    Fully prepare the archive with the exact verified spec, resolved findings,
    original passing receipt, and any generated `## Manual try guide` section.
 5. Validate and place that archive, update the exact build-plan item/parent and

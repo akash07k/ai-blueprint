@@ -174,8 +174,16 @@ Check whether the spec is a feature, fix, or rollback. A fix is marked
 `Type: Fix` and has no build-plan number. A rollback is marked `Type: Rollback`
 and records the exact target feature, archive, commit, and parent.
 
-- **Feature** - archive `blueprint/context/current-feature.md` to `blueprint/history/features/NN-name.md`
-  (NN is the build-plan number), and check it off in `blueprint/build-plan.md`
+- **Feature** - use the verified spec's frozen `**Build attempt:**` and stable ID,
+  following `../feature/reference/build-history.md`. Attempt 1 keeps
+  `blueprint/history/features/NN-name.md`; N > 1 uses `NN-name--build-N.md`.
+  Validate the attempt against prior immutable builds and completed reversals;
+  never increment it at completion or resume. For an older active spec without
+  the field, derive 1 only with no prior builds, or derive the next attempt only
+  from unambiguous prior builds and their proven completed reversals. Keep those
+  reviewed spec bytes and the existing branch unchanged; otherwise stop. An
+  existing matching archive and its annotation freeze the recovery destination.
+  Check the feature off in `blueprint/build-plan.md`
   (and its parent item once all sub-items are checked). Then recompute the
   overview fingerprint using `/overview`'s checkbox-normalized hash contract and
   replace only the existing `blueprint:source-hash` value. Do not regenerate or
@@ -184,8 +192,10 @@ and records the exact target feature, archive, commit, and parent.
 - **Fix** - archive it to `blueprint/history/fixes/name.md`. A fix isn't a build-plan item, so
   there's nothing to check off.
 - **Rollback** - archive it to
-  `blueprint/history/rollbacks/YYYY-MM-DD-NN-name.md`, preserving the original
-  completed feature archive. Create `blueprint/history/rollbacks/` first if an
+  `blueprint/history/rollbacks/YYYY-MM-DD-<exact-target-archive-stem>.md`, using the
+  spec's exact `Target archive` filename without `.md`, including any build suffix.
+  Preserve the original completed feature archive. Create
+  `blueprint/history/rollbacks/` first if an
   older Blueprint installation does not have it yet. Uncheck the exact target item in
   `blueprint/build-plan.md` and its parent when applicable, then append a concise
   note to the target line with the rollback date and archive path. Keep the
@@ -196,10 +206,12 @@ and records the exact target feature, archive, commit, and parent.
 **Archive resolved findings.** If `blueprint/context/findings.md` holds any
 findings, include a `## Findings` section in the prepared archive with
 every `closed`, `accepted`, or `invalid` entry at its final status (`accepted`
-entries keep their recorded reason). Prefix each ID with the archive name for
-global uniqueness: feature 12's `F-03` becomes `12/F-03`; fixes and rollbacks
-use their archive filename as the prefix. An entry carried forward from earlier
-work archives with the item that resolved it; its **Found** line preserves
+entries keep their recorded reason). Prefix feature IDs with the normalized stable
+ID and, for N > 1, `-build-N`: feature 12's first `F-03` becomes `12/F-03`, while
+attempt 2 becomes `12-build-2/F-03`. Derive N from the verified spec/history proof,
+never arbitrary filename text. Fixes and rollbacks use their archive filename as
+the prefix. An entry carried forward from earlier work archives with the item that
+resolved it; its **Found** line preserves
 where it came from. Only `closed`, `accepted`, and `invalid` entries are
 resolved for archival. A `fixed` entry is not resolved at any severity: never
 append it to the archive or remove it from the live ledger.

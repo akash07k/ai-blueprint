@@ -115,8 +115,11 @@ enable checkpoint prompts by itself. The previous workflow uses
 `stepReview: "every"` together with `checkpointCommits: "enabled"`.
 10. **Safety + log** - `/complete` first checks the active spec, branch, changed
    files, Verify or fallback check evidence, manual try path, and adapter sync when
-   workflow files changed. Then it archives the spec to `blueprint/history/features/NN-name.md` (or
-   `blueprint/history/fixes/`), checks the feature off in `blueprint/build-plan.md`, and
+   workflow files changed. Then it archives the spec using its frozen build attempt:
+   `blueprint/history/features/NN-name.md` for the first build and
+   `NN-name--build-N.md` for rebuilds, preserving earlier archives and the stable
+   plan ID (fixes use `blueprint/history/fixes/`). It checks the feature off in
+   `blueprint/build-plan.md`, and
    resets `blueprint/context/current-feature.md` and
    `blueprint/context/review.md` to their stubs.
 11. **Feature commit** - `/complete` stages everything on the branch (step work

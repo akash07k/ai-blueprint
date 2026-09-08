@@ -54,9 +54,12 @@ Gather the smallest packet that can answer what must be built:
 Finish context gathering in at most four tool rounds after this skill starts:
 target and overview matches, one batched repository inspection, applicable
 standards only if needed, and Verify. Combine or skip rounds when possible. Do
-not inspect skill directories, `ai-interaction.md`, findings, review records,
-history, or templates during normal planned-feature work. Do not create scratch
-code or run implementation probes while writing a spec. Put a check in the
+not inspect other skill directories, `ai-interaction.md`, findings, review records,
+or templates during normal planned-feature work. The only history exception is
+this skill's `reference/build-history.md` and the selected feature's archive metadata,
+exact rollback records, and Git evidence needed to freeze its build attempt below;
+batch this with the target lookup, without loading unrelated history. Do not create
+scratch code or run implementation probes while writing a spec. Put a check in the
 relevant build step when a repository detail cannot be confirmed from existing
 evidence.
 
@@ -89,6 +92,12 @@ resume this skill. Bugs and small unplanned changes belong in `/fix`.
 
 ## Write the final spec once
 
+Before review, allocate the selected stable feature ID's build attempt using
+`reference/build-history.md`: first build 1, otherwise one greater than
+the maximum proven prior attempt after all prior builds were reversed. Preserve
+the ID across renamed titles and lettered sub-items. Stop on ambiguous history;
+never infer attempts from a title suffix, file count, or timestamps.
+
 Draft and critique in context, then write
 `blueprint/context/current-feature.md` once. A later write is only for a
 mechanical correction or user-requested revision. Record `**Branch:**` with the
@@ -99,6 +108,7 @@ use this canonical form:
 # Feature: <title>
 
 **From build-plan:** feature <id>
+**Build attempt:** <positive integer>
 ```
 
 Then use these section headings:
@@ -132,7 +142,14 @@ visual, persisted-data, or integration evidence that was not run.
 
 Build the branch value from the configured feature prefix plus the feature title
 in lowercase kebab-case. Replace each run of characters other than ASCII letters
-and digits with one hyphen and trim edge hyphens.
+and digits with one hyphen and trim edge hyphens. For attempt N > 1, append
+`--build-N` to that slug before recording the full branch, for example
+`feature/export-reports--build-2`. The reserved double hyphen distinguishes the
+attempt from a title ending in `Build 2`. Before freezing the new spec, check the
+exact archive path and branch availability using `reference/build-history.md`.
+Stop on filesystem entries, existing refs, or prior Git use of that archive path;
+never auto-bump the attempt. Freeze both fields before review; completion and
+resume reuse them rather than allocating again.
 
 For visual replication, require an existing screenshot or reference. Store a
 provided image under `blueprint/reference/` and link it. If `prototypes/` exists,
