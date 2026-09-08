@@ -14,6 +14,7 @@ import {
   shouldUseColor
 } from "../lib/status.js";
 import {
+  CONTROL_DIR,
   MANIFEST_PATH,
   adapterListFromMode,
   applyPreparedUpdate,
@@ -166,6 +167,7 @@ async function runCli(
 
   const adapters = await resolveAdapters(options);
   const entries = getTemplateEntries(adapters);
+  await validateInstallDestinations(entries, targetDir);
   const existingEntries = entries.filter((entry) =>
     fsSync.existsSync(path.join(targetDir, entry.target))
   );
@@ -476,6 +478,66 @@ async function copyTemplateEntry(entry: TemplateEntry, targetDir: string): Promi
   const source = path.join(templateRoot, entry.source);
   const target = path.join(targetDir, entry.target);
   await copyPath(source, target);
+}
+
+async function validateInstallDestinations(
+  entries: readonly TemplateEntry[],
+  targetDir: string
+): Promise<void> {
+  await assertDestinationType(targetDir, "directory");
+
+  for (const entry of entries) {
+    await validateTemplateDestination(
+      path.join(templateRoot, entry.source),
+      path.join(targetDir, entry.target)
+    );
+  }
+
+  await assertDestinationType(path.join(targetDir, CONTROL_DIR), "directory");
+  await assertDestinationType(path.join(targetDir, MANIFEST_PATH), "file");
+  await assertDestinationType(path.join(targetDir, CONTROL_DIR, ".gitignore"), "file");
+}
+
+async function validateTemplateDestination(source: string, target: string): Promise<void> {
+  const stats = await fs.stat(source);
+
+  if (stats.isDirectory()) {
+    await assertDestinationType(target, "directory");
+
+    for (const child of await fs.readdir(source)) {
+      await validateTemplateDestination(path.join(source, child), path.join(target, child));
+    }
+  } else if (stats.isFile()) {
+    await assertDestinationType(target, "file");
+  }
+}
+
+async function assertDestinationType(target: string, expected: "directory" | "file"): Promise<void> {
+  let stats;
+
+  try {
+    stats = await fs.lstat(target);
+  } catch (error: unknown) {
+    if (error instanceof Error && "code" in error) {
+      if (error.code === "ENOENT") {
+        return;
+      }
+
+      if (error.code === "ENOTDIR") {
+        throw new Error(`Refusing to install at ${target}: a parent path is not a directory.`);
+      }
+    }
+
+    throw error;
+  }
+
+  if (stats.isSymbolicLink()) {
+    throw new Error(`Refusing to install through symbolic-link path: ${target}`);
+  }
+
+  if (expected === "directory" ? !stats.isDirectory() : !stats.isFile()) {
+    throw new Error(`Refusing to install at ${target}: expected a ${expected}.`);
+  }
 }
 
 async function copyPath(source: string, target: string): Promise<void> {
