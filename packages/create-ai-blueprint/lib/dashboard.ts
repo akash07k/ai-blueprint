@@ -939,7 +939,7 @@ const DASHBOARD_HTML: string = `<!doctype html>
         ", try guide " + gates.tryGuide;
     }
 
-    function renderActivity(activity, configuration) {
+    function renderActivity(activity, configuration, nextAction) {
       const panel = byId("activity-panel");
       if (activity.state !== "recorded") {
         panel.hidden = true;
@@ -981,10 +981,8 @@ const DASHBOARD_HTML: string = `<!doctype html>
       }
 
       const resumeRow = byId("activity-resume-row");
-      resumeRow.hidden = !activity.resumeCommand;
-      if (activity.resumeCommand) {
-        byId("activity-resume").textContent = activity.resumeCommand;
-      }
+      resumeRow.hidden = !activity.resumeCommand || activity.resumeCommand !== nextAction.command;
+      byId("activity-resume").textContent = resumeRow.hidden ? "" : activity.resumeCommand;
     }
 
     function render(status) {
@@ -992,7 +990,8 @@ const DASHBOARD_HTML: string = `<!doctype html>
       byId("project-path").textContent = status.project.root;
       const healthIssues = status.warnings.map((warning) => warning.message).concat(
         status.findings.blockers.map((finding) => "Blocking finding " + finding.id + ": " + finding.title),
-        status.completion.blockers.filter((blocker) => blocker.includes("independent review"))
+        status.completion.blockers.filter((blocker) =>
+          blocker.includes("independent review") || blocker === "verification failed")
       );
       const healthCount = healthIssues.length;
       setPill(
@@ -1020,7 +1019,7 @@ const DASHBOARD_HTML: string = `<!doctype html>
       );
       byId("overview").textContent = status.plans.overview.state;
       byId("onboarding").textContent = status.onboarding.state;
-      renderActivity(status.activity, status.configuration);
+      renderActivity(status.activity, status.configuration, status.nextAction);
 
       const build = status.plans.build;
       const work = status.currentWork;

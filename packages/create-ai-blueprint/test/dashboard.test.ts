@@ -5,6 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import test, { type TestContext } from "node:test";
 import { promisify } from "node:util";
+import { runInNewContext } from "node:vm";
 
 import {
   DASHBOARD_HOST,
@@ -164,6 +165,11 @@ test("dashboard serves live read-only project status on loopback", async (t) => 
       { checked: false, title: "Render live state" }
     ]
   });
+  assert.equal(firstStatus.completion.state, "blocked");
+  assert.deepEqual(firstStatus.nextAction, {
+    command: "/implement",
+    reason: "Resume with Render live state."
+  });
   assert.deepEqual(firstStatus.history, {
     total: 1,
     items: [{
@@ -204,6 +210,43 @@ test("dashboard serves live read-only project status on loopback", async (t) => 
   const completedWorkStatus = await readStatus(dashboard.url);
   assert.equal(completedWorkStatus.currentWork.completed, 2);
   assert.equal(completedWorkStatus.currentWork.remaining, 0);
+  assert.equal(completedWorkStatus.completion.state, "needs_verification");
+  assert.equal(completedWorkStatus.nextAction.command, "/check");
+
+  const workPath = path.join(projectRoot, "blueprint", "context", "current-feature.md");
+  const work = await fs.readFile(workPath, "utf8");
+  await fs.writeFile(workPath, work.replace("**Status:** implemented", "**Status:** verification failed"));
+  const activityPath = path.join(projectRoot, "blueprint", ".state", "run.json");
+  const activity = JSON.parse(await fs.readFile(activityPath, "utf8"));
+  await fs.writeFile(activityPath, JSON.stringify({ ...activity, resumeCommand: "/complete current" }));
+
+  const failedStatus = await readStatus(dashboard.url);
+  assert.deepEqual(failedStatus.completion, { state: "blocked", blockers: ["verification failed"] });
+  assert.equal(failedStatus.nextAction.command, "/implement");
+  assert.match(failedStatus.nextAction.reason, /Verification failed/);
+  assert.equal(failedStatus.activity.resumeCommand, "/complete current");
+  const failedActivity = renderActivityPanel(page, failedStatus);
+  assert.equal(failedActivity.get("activity-resume-row")?.hidden, true);
+  assert.equal(failedActivity.get("activity-resume")?.textContent, "");
+
+  await fs.writeFile(workPath, work.replace("**Status:** implemented", "**Status:** verified"));
+  const reviewPath = path.join(projectRoot, "blueprint", "context", "review.md");
+  await fs.writeFile(reviewPath, "# Independent Review\n\n**State:** passed\n");
+  const malformedReviewStatus = await readStatus(dashboard.url);
+  assert.equal(malformedReviewStatus.completion.state, "blocked");
+  assert.equal(malformedReviewStatus.nextAction.command, "/doctor");
+  assert.match(malformedReviewStatus.nextAction.reason, /blueprint\/context\/review\.md/);
+  await fs.rm(reviewPath);
+
+  await fs.writeFile(
+    path.join(projectRoot, "blueprint", "context", "findings.md"),
+    "### F-01 [P1] unknown - Invalid status\n"
+  );
+  const malformedFindingsStatus = await readStatus(dashboard.url);
+  assert.deepEqual(malformedFindingsStatus.completion, { state: "blocked", blockers: ["findings record is malformed"] });
+  assert.equal(malformedFindingsStatus.nextAction.command, "/doctor");
+  assert.match(malformedFindingsStatus.nextAction.reason, /blueprint\/context\/findings\.md/);
+  assert.equal(renderActivityPanel(page, malformedFindingsStatus).get("activity-resume-row")?.hidden, true);
 
   await fs.writeFile(
     path.join(projectRoot, "blueprint", "history", "features", "02-dashboard.md"),
@@ -224,6 +267,10 @@ _Nothing in progress. Run /feature to start._
 
   const idleStatus = await readStatus(dashboard.url);
   assert.deepEqual(idleStatus.completion, { state: "idle", blockers: [] });
+  assert.equal(idleStatus.nextAction.command, "/complete current");
+  const idleActivity = renderActivityPanel(page, idleStatus);
+  assert.equal(idleActivity.get("activity-resume-row")?.hidden, false);
+  assert.equal(idleActivity.get("activity-resume")?.textContent, "/complete current");
 
   const postResponse = await fetch(`${dashboard.url}/api/status`, {
     method: "POST"
@@ -343,6 +390,31 @@ interface DashboardStatus {
     state: string;
     blockers: string[];
   };
+  nextAction: {
+    command: string | null;
+    reason: string;
+  };
+}
+
+function renderActivityPanel(page: string, status: DashboardStatus) {
+  const script = page.match(/<script>([\s\S]+?)<\/script>/)?.[1];
+  assert.ok(script);
+  const elements = new Map<string, { hidden: boolean; textContent: string; className: string }>();
+  runInNewContext(`${script}\nrenderActivity(status.activity, status.configuration, status.nextAction);`, {
+    status,
+    document: {
+      hidden: true,
+      getElementById(id: string) {
+        if (!elements.has(id)) elements.set(id, { hidden: false, textContent: "", className: "" });
+        return elements.get(id);
+      },
+      querySelectorAll: () => [],
+      addEventListener() {}
+    },
+    EventSource: class { addEventListener() {} },
+    setInterval() {}
+  });
+  return elements;
 }
 
 async function readStatus(url: string): Promise<DashboardStatus> {

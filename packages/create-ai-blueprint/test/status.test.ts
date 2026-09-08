@@ -558,6 +558,131 @@ test("readProjectStatus marks verified work ready for completion", async (t) => 
   });
 });
 
+test("readProjectStatus distinguishes failed, incomplete, and missing verification", async (t) => {
+  for (const entry of [
+    { status: " Verification FAILED ", state: "blocked", blocker: "verification failed", command: "/implement", reason: /Verification failed/ },
+    { status: "verification incomplete", state: "needs_verification", blocker: "verification is incomplete", command: "/check", reason: /Verification is incomplete/ },
+    { status: null, state: "needs_verification", blocker: "verification evidence is not persisted", command: "/check", reason: /verification is not persisted/ },
+    { status: "verification failed previously", state: "needs_verification", blocker: "verification evidence is not persisted", command: "/check", reason: /verification is not persisted/ }
+  ]) {
+    await t.test(entry.status || "missing status", async (t) => {
+      const projectRoot = await createProject(t, {
+        currentWork: checkedCurrentWork(entry.status),
+        findings: emptyFindings(),
+        branch: "feature/status-command"
+      });
+      const before = await snapshotEvidence(projectRoot);
+      const status = await readProjectStatus(projectRoot);
+
+      assert.deepEqual(status.completion, { state: entry.state, blockers: [entry.blocker] });
+      assert.equal(status.nextAction.command, entry.command);
+      assert.match(status.nextAction.reason, entry.reason);
+      const output = formatHumanStatus(status);
+      assert.match(output, entry.reason);
+      assert.ok(output.includes(`Next action\n  ${entry.command}\n`));
+      assert.deepEqual(await snapshotEvidence(projectRoot), before);
+    });
+  }
+});
+
+test("readProjectStatus reports failed verification before unfinished build steps", async (t) => {
+  const projectRoot = await createProject(t, {
+    currentWork: checkedCurrentWork("verification failed").replace("- [x]", "- [ ]"),
+    findings: emptyFindings(),
+    branch: "feature/status-command"
+  });
+  const status = await readProjectStatus(projectRoot);
+
+  assert.deepEqual(status.warnings, []);
+  assert.equal(status.health, "warning");
+  assert.equal(status.completion.state, "blocked");
+  assert.ok(status.completion.blockers.includes("verification failed"));
+  assert.equal(status.nextAction.command, "/implement");
+  assert.match(status.nextAction.reason, /Verification failed/);
+});
+
+test("readProjectStatus diagnoses malformed review and findings evidence without changing it", async (t) => {
+  for (const kind of ["review", "malformed_findings", "invalid_findings_path", "unsafe_findings_path"]) {
+    await t.test(kind, async (t) => {
+      const projectRoot = await createProject(t, {
+        currentWork: checkedCurrentWork(),
+        findings: kind === "malformed_findings"
+          ? "# Findings\n\n### F-01 [P2] open - Valid minor finding\n### F-02 [P1] closed - Reviewed repair\n### F-03 [P1] unknown - Invalid status\n"
+          : emptyFindings(),
+        branch: "feature/status-command"
+      });
+      const contextRoot = path.join(projectRoot, "blueprint", "context");
+      const findingsPath = path.join(contextRoot, "findings.md");
+      const externalPath = path.join(path.dirname(projectRoot), "external-findings.md");
+      if (kind === "review") {
+        await fs.writeFile(path.join(contextRoot, "review.md"), "# Independent Review\n\n**State:** passed\n");
+      } else if (kind === "invalid_findings_path" || kind === "unsafe_findings_path") {
+        await fs.rm(findingsPath);
+        if (kind === "invalid_findings_path") {
+          await fs.mkdir(findingsPath);
+        } else {
+          await fs.writeFile(externalPath, "### F-99 [P1] open - External record\n");
+          await fs.symlink(externalPath, findingsPath);
+        }
+      }
+      const before = await snapshotEvidence(projectRoot);
+      const status = await readProjectStatus(projectRoot);
+
+      assert.equal(status.health, "warning");
+      assert.equal(status.completion.state, "blocked");
+      assert.equal(status.nextAction.command, "/doctor");
+      assert.ok(status.warnings.some((warning) => warning.code === (kind === "review" ? "malformed_review" : kind)));
+      assert.match(status.nextAction.reason, kind === "review" ? /blueprint\/context\/review\.md/ : /blueprint\/context\/findings\.md/);
+      assert.match(status.completion.blockers.join("; "), kind === "review" ? /independent review record is malformed/ : /findings (record|path)/);
+      assert.match(formatHumanStatus(status), /Next action\n  \/doctor/);
+      if (kind === "malformed_findings") {
+        assert.equal(status.findings.total, 2);
+        assert.equal(status.findings.byStatus.open, 1);
+        assert.equal(status.findings.byStatus.closed, 1);
+        assert.deepEqual(status.findings.active.map((finding) => finding.id), ["F-01"]);
+      } else {
+        assert.equal(status.findings.total, 0);
+      }
+      assert.deepEqual(status.findings.blockers, []);
+      assert.deepEqual(await snapshotEvidence(projectRoot), before);
+      if (kind === "unsafe_findings_path") {
+        assert.equal(await fs.readFile(externalPath, "utf8"), "### F-99 [P1] open - External record\n");
+      }
+    });
+  }
+});
+
+test("readProjectStatus keeps legacy empty and valid nonblocking ledgers compatible", async (t) => {
+  for (const findings of [null, "", emptyFindings(), "A note about a possible issue.\n", "### F-01 [P2] open - Minor improvement\n### F-02 [P1] closed - Reviewed repair\n"]) {
+    const projectRoot = await createProject(t, {
+      currentWork: checkedCurrentWork(" VERIFIED "),
+      findings: findings || "",
+      branch: "feature/status-command"
+    });
+    if (findings === null) {
+      await fs.rm(path.join(projectRoot, "blueprint", "context", "findings.md"));
+    }
+    const status = await readProjectStatus(projectRoot);
+
+    assert.deepEqual(status.completion, { state: "ready", blockers: [] });
+    assert.equal(status.nextAction.command, "/complete");
+    assert.ok(!status.warnings.some((warning) => warning.code.includes("findings")));
+  }
+});
+
+test("readProjectStatus does not offer completion on a mismatched branch", async (t) => {
+  const projectRoot = await createProject(t, {
+    currentWork: checkedCurrentWork(),
+    findings: emptyFindings(),
+    branch: "fix/status-command"
+  });
+  const status = await readProjectStatus(projectRoot);
+
+  assert.deepEqual(status.completion, { state: "blocked", blockers: ["branch does not match feature work"] });
+  assert.equal(status.nextAction.command, "/doctor");
+  assert.match(status.nextAction.reason, /branch does not match feature work/);
+});
+
 test("readProjectStatus blocks completion when independent review is required", async (t) => {
   const projectRoot = await createProject(t, {
     currentWork: `# Feature: Status command
@@ -823,6 +948,70 @@ test("readProjectStatus sends malformed dashboard state to Doctor", async (t) =>
   assert.match(formatHumanStatus(status), /Next action\n  \/doctor/);
 });
 
+test("readProjectStatus keeps activity advice consistent with active work evidence", async (t) => {
+  for (const entry of [
+    { name: "ready Autopilot fallback", work: checkedCurrentWork("implemented"), activity: recordedActivity("autopilot", "ready"), expected: "/check" },
+    { name: "ready completion with arguments", work: checkedCurrentWork("verification incomplete"), activity: recordedActivity("check", "ready", "/complete current"), expected: "/check" },
+    { name: "blocked explicit completion", work: checkedCurrentWork("implemented"), activity: recordedActivity("continuous", "blocked", "/complete resume"), expected: "/check" },
+    { name: "blocked inferred completion", work: checkedCurrentWork("implemented"), activity: recordedActivity("complete", "blocked"), expected: "/check" },
+    { name: "stale inferred completion", work: checkedCurrentWork("implemented"), activity: recordedActivity("complete", "running"), expected: "/check" },
+    { name: "ready activity after failed verification", work: checkedCurrentWork("verification failed"), activity: recordedActivity("autopilot", "ready", "/audit"), expected: "/implement" },
+    { name: "malformed work", work: "# Feature: Incomplete contract\n", activity: recordedActivity("complete", "blocked"), expected: "/doctor" },
+    { name: "malformed review", work: checkedCurrentWork(), activity: recordedActivity("continuous", "blocked", "/continuous resume"), review: "# Independent Review\n\n**State:** passed\n", expected: "/doctor" },
+    { name: "malformed findings", work: checkedCurrentWork(), activity: recordedActivity("autopilot", "ready", "/complete"), findings: "### F-01 [P1] unknown - Invalid status\n", expected: "/doctor" }
+  ]) {
+    await t.test(entry.name, async (t) => {
+      const projectRoot = await createProject(t, {
+        currentWork: entry.work,
+        findings: entry.findings || emptyFindings(),
+        branch: "feature/status-command",
+        runState: entry.activity
+      });
+      if (entry.review) {
+        await fs.writeFile(path.join(projectRoot, "blueprint", "context", "review.md"), entry.review);
+      }
+      const before = await snapshotEvidence(projectRoot);
+      const status = await readProjectStatus(projectRoot);
+
+      assert.notEqual(status.completion.state, "ready");
+      assert.equal(status.nextAction.command, entry.expected);
+      assert.equal(status.activity.resumeCommand, entry.activity.resumeCommand || null);
+      assert.ok(formatHumanStatus(status).includes(`Next action\n  ${entry.expected}\n`));
+      assert.deepEqual(await snapshotEvidence(projectRoot), before);
+    });
+  }
+});
+
+test("readProjectStatus preserves fresh running activity while completion is blocked", async (t) => {
+  const now = new Date().toISOString();
+  const projectRoot = await createProject(t, {
+    currentWork: checkedCurrentWork("verification failed"),
+    findings: "### F-01 [P1] unknown - Invalid status\n",
+    branch: "feature/status-command",
+    runState: { ...recordedActivity("implement", "running"), startedAt: now, updatedAt: now }
+  });
+  const status = await readProjectStatus(projectRoot);
+
+  assert.equal(status.completion.state, "blocked");
+  assert.equal(status.health, "warning");
+  assert.deepEqual(status.nextAction, { command: null, reason: "/implement is currently running." });
+});
+
+test("readProjectStatus preserves activity completion for ready work and idle archival recovery", async (t) => {
+  for (const currentWork of [checkedCurrentWork(), resetCurrentWork()]) {
+    const projectRoot = await createProject(t, {
+      currentWork,
+      findings: emptyFindings(),
+      branch: "feature/status-command",
+      runState: recordedActivity("complete", "blocked")
+    });
+    const status = await readProjectStatus(projectRoot);
+
+    assert.ok(status.completion.state === "ready" || status.completion.state === "idle");
+    assert.equal(status.nextAction.command, "/complete resume");
+  }
+});
+
 test("formatHumanStatus prints a scannable orientation", async (t) => {
   const projectRoot = await createProject(t, {
     currentWork: resetCurrentWork(),
@@ -982,6 +1171,55 @@ function resetCurrentWork(): string {
 
 _Nothing in progress. Run /feature to start._
 `;
+}
+
+function checkedCurrentWork(status: string | null = "verified"): string {
+  return `# Feature: Status command
+
+**From build-plan:** feature 2
+${status === null ? "" : `**Status:** ${status}`}
+
+## Build steps
+
+- [x] **Step 1 - Print status** - format the result.
+`;
+}
+
+function recordedActivity(command: string, status: string, resumeCommand?: string): Record<string, unknown> {
+  return {
+    schemaVersion: 1,
+    command,
+    status,
+    summary: "Recorded workflow activity",
+    startedAt: "2026-08-25T10:00:00.000Z",
+    updatedAt: "2026-08-25T10:05:00.000Z",
+    ...(resumeCommand ? { resumeCommand } : {})
+  };
+}
+
+async function snapshotEvidence(projectRoot: string): Promise<unknown[]> {
+  return Promise.all([
+    "blueprint/context/current-feature.md",
+    "blueprint/context/findings.md",
+    "blueprint/context/review.md",
+    "blueprint/.state/run.json"
+  ].map(async (relativePath) => {
+    const filePath = path.join(projectRoot, relativePath);
+    const stats = await fs.lstat(filePath).catch((error: NodeJS.ErrnoException) => {
+      if (error.code === "ENOENT") return null;
+      throw error;
+    });
+    if (!stats) return null;
+    return {
+      path: relativePath,
+      mtime: stats.mtimeMs,
+      contents: stats.isSymbolicLink()
+        ? await fs.readlink(filePath)
+        : stats.isDirectory()
+          ? await fs.readdir(filePath)
+          : await fs.readFile(filePath, "utf8")
+    };
+  }));
 }
 
 function emptyFindings(): string {
