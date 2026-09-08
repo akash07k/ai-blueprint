@@ -5,6 +5,12 @@ entry point: Codex, OpenCode, Cursor, GitHub Copilot, Gemini CLI, Aider, Zed,
 Windsurf, and others read `AGENTS.md`. Claude Code reads `CLAUDE.md`, which imports
 this file, so there is a single source of truth.
 
+Claude Code, Codex, and every other AI tool must not add AI attribution to
+commits or pull requests, including AI `Co-Authored-By` trailers or generated-by
+signatures. Preserve genuine human attribution. See
+[Commit and PR attribution](blueprint/context/ai-interaction.md#commit-and-pr-attribution)
+for optional tool settings.
+
 ## What this is
 
 A description of your project and the problem it solves.

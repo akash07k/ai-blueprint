@@ -42,6 +42,9 @@ The installer copies the Blueprint workflow files into the current directory:
 
 It keeps the app's root `README.md` alone.
 
+See [Commit and PR attribution](https://github.com/aiblueprinthq/ai-blueprint/blob/main/blueprint/context/ai-interaction.md#commit-and-pr-attribution)
+for the rule for all AI tools and optional settings that reduce unwanted AI signatures.
+
 ## Core workflow
 
 Blueprint starts with your plans, then repeats one controlled loop for every

@@ -110,6 +110,9 @@ The interactive installer lets you select one or more adapters. It adds the
 workflow files needed by those tools and leaves your application's `README.md`
 alone.
 
+See [Commit and PR attribution](blueprint/context/ai-interaction.md#commit-and-pr-attribution)
+for the rule for all AI tools and optional settings that reduce unwanted AI signatures.
+
 See [Getting Started](https://ai-blueprint.dev/docs/getting-started/) for the
 complete installation and onboarding walkthrough. For a project that already
 has shipped features, start with

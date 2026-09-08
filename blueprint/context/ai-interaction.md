@@ -175,7 +175,34 @@ branch.
   `chore: establish Blueprint project baseline`
 - Use conventional commit messages (feat:, fix:, chore:, etc.)
 - Keep commits focused (one feature/fix per commit)
-- Never put "Generated with Claude" or any AI attribution in commit messages
+- Do not add AI `Co-Authored-By` trailers, generated-by signatures, or other AI
+  attribution to commits or pull requests; preserve genuine human attribution
+
+### Commit and PR attribution
+
+Claude Code supports optional [attribution settings](https://code.claude.com/docs/en/settings-reference#attribution).
+Merge these keys into `.claude/settings.json` for the project or
+`~/.claude/settings.json` for [personal global settings](https://code.claude.com/docs/en/settings),
+preserving all other settings in the existing JSON:
+
+```json
+{
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  }
+}
+```
+
+Empty strings suppress default commit and PR attribution. The older
+`includeCoAuthoredBy` setting is deprecated.
+
+Older Codex advice to set `commit_attribution = ""` is outdated: current Codex
+[no longer supports that TOML key](https://github.com/openai/codex/commit/d18a7c982e4abad5bf549cda6f4b61a18c10702e).
+
+These settings are optional; the installer does not change your tool
+configuration. Guidance and settings reduce unwanted attribution but do not
+enforce commit or PR message contents. Review the final text before submitting it.
 
 ## When Stuck
 
