@@ -189,13 +189,15 @@ preserving all other settings in the existing JSON:
 {
   "attribution": {
     "commit": "",
-    "pr": ""
+    "pr": "",
+    "sessionUrl": false
   }
 }
 ```
 
-Empty strings suppress default commit and PR attribution. The older
-`includeCoAuthoredBy` setting is deprecated.
+Empty strings suppress the default commit trailer and PR attribution text.
+`sessionUrl: false` also omits session links from cloud and Remote Control
+commits and PRs. The older `includeCoAuthoredBy` setting is deprecated.
 
 Older Codex advice to set `commit_attribution = ""` is outdated: current Codex
 [no longer supports that TOML key](https://github.com/openai/codex/commit/d18a7c982e4abad5bf549cda6f4b61a18c10702e).

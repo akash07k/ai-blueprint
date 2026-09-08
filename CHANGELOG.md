@@ -3,6 +3,31 @@
 Notable changes to AI Blueprint are documented here. Release dates reflect the
 published `create-ai-blueprint` package.
 
+## [1.6.1] - 2026-09-08
+
+### Fixed
+
+- Validate installation destinations before copying files, rejecting symlinks
+  and conflicting file paths without leaving a partial installation.
+- Resume interrupted completion from the existing archive and Git state instead
+  of repeating archival or starting the next feature prematurely.
+- Preserve earlier feature archives and finding references when rebuilding a
+  feature after rollback.
+- Support independent review with intentionally local-only specs without
+  forcing them into Git or requiring commits for review evidence alone.
+- Keep failed verification and malformed review or findings evidence from
+  appearing ready for completion in CLI status and the dashboard.
+
+### Changed
+
+- Simplified the build-plan template while keeping checkbox examples. Overview
+  now formats clear feature lists into tracked checklists while preserving
+  scope, order, existing IDs, and completion state. Changes to the plan's
+  meaning still require approval.
+- Clarified the no-AI-attribution rule for all tools, documented optional Claude
+  Code settings, and identified obsolete Codex configuration advice. Existing
+  tool configuration is preserved; no Git hooks or message rewriting are added.
+
 ## [1.6.0] - 2026-09-06
 
 ### Added
