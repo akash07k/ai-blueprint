@@ -83,6 +83,9 @@ The code reveals *what* and *how*, never *why* or *what next*. Ask the user a sh
 set of questions (aim for three to five, not an interrogation) to fill the gaps:
 
 - What is this project for, and who uses it? (the problem and the users)
+- Are any material reachability or deployment constraints not already evident
+  from the code? Ask only when an answer would materially change the roadmap or
+  architecture; do not turn this into a scale or security questionnaire.
 - Is the stack and structure you found intentional, or are there parts they'd call
   legacy / want to change?
 - What do you want to build next? (the unchecked items in the build plan)
@@ -98,9 +101,12 @@ inference you're unsure of with a clear `> TODO (confirm)` so the user can corre
 it rather than inherit a wrong guess.
 
 - **`blueprint/project-plan.md`** - the what & why, following the existing
-  worksheet structure (problem, users, features, data, tech, monetization, UI/UX).
+  worksheet structure (problem, users, features, data, tech, monetization, UI/UX,
+  deployment, and optional usage model).
   The "features" and "tech" sections describe what *already exists*; the rest comes
-  from the interview.
+  from the interview. Record observed auth, ownership, reachability, tenancy, and
+  deployment facts before asking; leave unknown usage fields blank rather than
+  inventing requirements.
 - **`blueprint/build-plan.md`** - the ordered feature list as a checklist. **Mark
   shipped features `- [x]`** (this is the brownfield difference: the build plan
   reflects reality, so most of an existing app starts checked) and the roadmap
@@ -161,7 +167,8 @@ Recommend option 1 by default. If the user chooses option 2:
 - Keep `AGENTS.md` tracked. It remains the lightweight public project guide for
   commands and conventions.
 - Make `AGENTS.md` public-safe: keep project description, commands, testing gate,
-  and coding conventions, but remove or avoid Blueprint workflow explanations,
+  coding conventions, and the Proportional engineering contract, but remove or
+  avoid Blueprint workflow explanations,
   hidden adapter paths, workflow-document pointers, and core skill lists that
   would expose the local-only workflow.
 - Explain that local-only mode hides the workflow contents from the repo, but the
@@ -199,6 +206,8 @@ the normal loop.
 - **Reflect reality, don't prescribe.** `coding-standards.md` must match the code
   that exists. A project using Zustand and REST routes should not be handed
   standards about Server Actions and Prisma just because that's the default.
+- Preserve the Proportional engineering contract in `AGENTS.md`; untuned
+  stack-specific template defaults are not established project requirements.
 - **Never invent intent.** Ask for the why and the roadmap; mark anything inferred
   with `> TODO (confirm)`. Silent guesses about purpose are the main failure mode.
 - **Don't clobber owned work.** If the plans already have real content, confirm

@@ -144,6 +144,9 @@ Gather these, then summarize. Do not dump file contents.
    - Check whether `blueprint/project-plan.md` and `blueprint/build-plan.md` look
      filled in or still template-like. Treat obvious TODO, TBD, example-only text,
      or empty required sections as not ready.
+   - The optional Usage model and constraints section may be blank, unanswered,
+     or still contain only the shipped worksheet prompts. Treat that as unknown
+     and healthy, not as an incomplete required section.
    - Check whether `blueprint/build-plan.md` is a numbered checkbox list. Raw
      bullets are allowed as a first draft, but they should be normalized by
      `/overview` before the build loop starts.

@@ -64,6 +64,8 @@ Cover the areas that matter to this project, not a fixed questionnaire:
 - UI/UX direction, accessibility needs, and useful references
 - monetization or business model when relevant
 - deployment shape, environments, background work, storage, and operations
+- usage scale and real trust boundaries when they would materially change the
+  product or architecture
 - risks, assumptions, unresolved decisions, and how success will be judged
 - feature boundaries, dependencies, and a sensible build order
 
@@ -71,6 +73,13 @@ Depth is the goal. Follow a consequential answer until its implications are
 clear instead of racing to the next category. Do not ask the user to repeat facts
 already established in the conversation or repository. Do not force irrelevant
 topics merely to complete a checklist.
+
+Do not turn discovery into a scale or security questionnaire. Ask about users,
+reachability, trust, tenancy, compliance, or availability only when the answer
+would materially change the solution. Record explicit non-requirements such as
+local-only, trusted-team, single-user, or no-compliance scope when the user
+establishes them. A missing answer remains unknown and is not permission to
+invent enterprise machinery or ignore trust boundaries visible in the code.
 
 Periodically return a compact discovery snapshot with:
 
@@ -110,6 +119,9 @@ For `blueprint/project-plan.md`:
   conversation requires them
 - preserve rationale, examples, tradeoffs, constraints, edge cases, and
   exclusions that will matter during later feature work
+- put confirmed usage, reachability, trust, tenancy, security, compliance,
+  availability, audit constraints, and explicit non-requirements in the optional
+  usage-model section; leave it unanswered when those facts are not established
 - be as detailed as the project needs; never compress a rich discovery into a
   line or two per section
 - distinguish confirmed decisions from assumptions and TODOs

@@ -59,6 +59,13 @@ Follow build steps in order. Build only what the spec says. If a step requires a
 unresolved product decision, unsafe action, missing prerequisite, or material
 scope expansion, stop and revise the spec instead of improvising.
 
+Add an abstraction, dependency, service, configuration surface, compatibility
+layer, or security mechanism only when the approved spec or an established
+repository requirement needs it now. Prefer existing code, the standard library,
+native platform features, and installed dependencies. If the simplest complete
+implementation conflicts with the spec, stop and revise the spec instead of
+silently building a larger design.
+
 For each step:
 
 1. Make the smallest coherent change that satisfies its `Done when`.
@@ -98,6 +105,13 @@ the finished diff. For user-facing work, inspect the reachability and error
 classification of each required state. Catch only known expected errors at a
 boundary; unexpected failures must reach the unexpected-error path. Fix any
 missing or contradicted contract before marking the spec verified.
+
+Run a proportionality check before final verification: every new abstraction,
+dependency, service, configuration surface, compatibility layer, and security
+mechanism must trace to the approved spec or an established repository
+requirement. Remove speculative machinery this work added without weakening real
+trust-boundary validation, data-loss prevention, accessibility, or configured
+verification.
 
 ## Verification
 

@@ -21,6 +21,7 @@ Print \`Hello, world!\` and make no other product change.
 Run \`npm run build\`, then run \`node src/greeting.js\`.
 `;
 
+import fs from "node:fs";
 import type { Runner } from "../harness.js";
 
 async function run(t: Runner) {
@@ -48,10 +49,22 @@ async function run(t: Runner) {
   );
   t.write("src/greeting.js", 'console.log("Hello world");\n');
   t.write("blueprint/context/current-feature.md", FIX_SPEC);
+  const configText = t.read("blueprint/config.json");
+  if (configText === null) throw new Error("Fixture is missing blueprint/config.json.");
+  const config = JSON.parse(configText);
+  config.workflow.checkpointCommits = "enabled";
+  config.qualityGates.regular.independentReview = "manual";
+  t.write("blueprint/config.json", JSON.stringify(config, null, 2) + "\n");
   t.gitInit();
   t.git("add", "-A");
   t.git("commit", "-m", "chore: create autopilot fixture");
   const mainBefore = t.git("rev-parse", "main");
+  const packageBefore = t.read("package.json");
+  const directoriesBefore = fs
+    .readdirSync(t.workspace, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && entry.name !== "node_modules")
+    .map((entry) => entry.name)
+    .sort();
 
   t.phase("autopilot builds and checks but stops before completion");
   const result = t.agent(
@@ -59,12 +72,38 @@ async function run(t: Runner) {
   );
   const currentBranch = t.git("branch", "--show-current");
   const currentFeature = t.read("blueprint/context/current-feature.md") || "";
+  const changedPaths = [
+    ...new Set([
+      ...t.git("diff", "--name-only", `main...${currentBranch}`).split("\n").filter(Boolean),
+      ...t
+        .git("status", "--porcelain")
+        .split("\n")
+        .filter(Boolean)
+        .map((line) => line.replace(/^[ MADRCU?!]{1,2}\s+/, ""))
+    ])
+  ].filter((relativePath) => relativePath !== "node_modules/");
 
   t.check("agent invocation succeeded", result.status === 0);
   t.check("main was not advanced", t.git("rev-parse", "main") === mainBefore);
   t.check("work remains on a fix branch", currentBranch.startsWith("fix/"));
   t.check("the greeting was corrected",   (t.read("src/greeting.js") ?? "").includes("Hello, world!"));
   t.check("the implementation step was checked", currentFeature.includes("- [x] 1."));
+  t.check("package metadata stayed byte-identical", t.read("package.json") === packageBefore);
+  t.check(
+    "only the source and current spec changed",
+    changedPaths.sort().join("\n") ===
+      ["blueprint/context/current-feature.md", "src/greeting.js"].join("\n")
+  );
+  t.check(
+    "no top-level directories were added",
+    JSON.stringify(
+      fs
+        .readdirSync(t.workspace, { withFileTypes: true })
+        .filter((entry) => entry.isDirectory() && entry.name !== "node_modules")
+        .map((entry) => entry.name)
+        .sort()
+    ) === JSON.stringify(directoriesBefore)
+  );
   t.check(
     "main still contains the original greeting",
     t.git("show", "main:src/greeting.js").includes("Hello world")

@@ -38,6 +38,7 @@ Feature 1 adds an optional name while preserving the default greeting.
 - Do not add dependencies.
 `;
 
+import fs from "node:fs";
 import type { Runner } from "../harness.js";
 
 async function run(t: Runner) {
@@ -46,12 +47,30 @@ async function run(t: Runner) {
   t.write("blueprint/project-plan.md", PROJECT_PLAN);
   t.write("blueprint/build-plan.md", BUILD_PLAN);
   t.write("blueprint/context/project-overview.md", PROJECT_OVERVIEW);
+  t.write(
+    "package.json",
+    JSON.stringify(
+      {
+        name: "feature-gate-fixture",
+        private: true,
+        scripts: { build: "node --check src/greeting.js" }
+      },
+      null,
+      2
+    ) + "\n"
+  );
   t.write("src/greeting.js", 'console.log("Hello, world!");\n');
   t.gitInit();
   t.git("add", "-A");
   t.git("commit", "-m", "chore: create feature planning fixture");
   const headBefore = t.git("rev-parse", "HEAD");
   const sourceBefore = t.read("src/greeting.js");
+  const packageBefore = t.read("package.json");
+  const directoriesBefore = fs
+    .readdirSync(t.workspace, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && entry.name !== "node_modules")
+    .map((entry) => entry.name)
+    .sort();
 
   t.phase("feature writes a spec and stops before implementation");
   const result = t.agent(
@@ -62,13 +81,29 @@ async function run(t: Runner) {
     .git("status", "--porcelain")
     .split("\n")
     .filter(Boolean)
-    .map((line) => line.replace(/^[ MADRCU?!]{1,2}\s+/, ""));
+    .map((line) => line.replace(/^[ MADRCU?!]{1,2}\s+/, ""))
+    .filter((relativePath) => relativePath !== "node_modules/");
 
   t.check("agent invocation succeeded", result.status === 0);
   t.check("a personalized greeting spec was written", /personalized greeting/i.test(currentFeature));
   t.check("the spec has unchecked build steps", currentFeature.includes("- [ ]"));
   t.check("the spec defines observable done-when criteria", /done when/i.test(currentFeature));
   t.check("product source was not edited", t.read("src/greeting.js") === sourceBefore);
+  t.check("package metadata was not edited", t.read("package.json") === packageBefore);
+  t.check(
+    "no dependency installation was added to the spec",
+    !/(?:^|`)[^\S\n]*(?:npm (?:install|i|add)|pnpm (?:add|install)|yarn add|bun add)(?:[^\S\n]+-{1,2}[\w-]+)*[^\S\n]+(?!-)[@\w]/im.test(currentFeature)
+  );
+  t.check(
+    "no top-level directories were added",
+    JSON.stringify(
+      fs
+        .readdirSync(t.workspace, { withFileTypes: true })
+        .filter((entry) => entry.isDirectory() && entry.name !== "node_modules")
+        .map((entry) => entry.name)
+        .sort()
+    ) === JSON.stringify(directoriesBefore)
+  );
   t.check("no implementation branch was created", t.git("branch", "--show-current") === "main");
   t.check("no commit was created", t.git("rev-parse", "HEAD") === headBefore);
   t.check(

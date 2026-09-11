@@ -117,12 +117,17 @@ If there is no active spec:
    - undefined contracts
    - missing design reference
    - scope creep
+   - speculative abstractions, dependencies, services, configuration surfaces,
+     compatibility layers, or security mechanisms
    - vague done-whens
    - missing testing plan when `AGENTS.md` declares a test command
 4. Apply the spec fixes.
 
 Autopilot may continue past this spec gate because the user explicitly invoked
 Autopilot. Still report what the critique changed in the final packet.
+Never stop for a reversible internal detail with no user-visible, security,
+persisted-data, interoperability, or cost consequence; choose the smaller
+repository-native option.
 
 ## Step 3 - create or reuse the branch
 
@@ -142,6 +147,10 @@ Do not pause for user approval after each passing step, regardless of the
 configured `workflow.stepReview` value. The review happens at the final packet
 unless a hard stop is hit.
 
+Add an abstraction, dependency, service, configuration surface, compatibility
+layer, or security mechanism only when the approved spec or an established
+repository requirement needs it now.
+
 For every step:
 
 1. Implement only that step.
@@ -160,6 +169,8 @@ For every step:
 4. Self-review the diff for the step:
    - does it match the spec?
    - did it add scope?
+   - does every new layer trace to a current requirement, and can existing code,
+     the standard library, the platform, or an installed dependency replace it?
    - is the error path handled?
    - did it follow `coding-standards.md`?
    - are tests present for new in-scope logic when the test gate is on?
@@ -258,8 +269,9 @@ For every finding:
    local project patterns. An audit finding is evidence to investigate, not an
    automatic instruction to edit.
 2. Repair confirmed P0 and P1 findings when the fix stays inside the approved
-   feature scope and does not require a product or architecture decision. Set
-   the repaired finding to `fixed` in the ledger, never `closed`.
+   feature scope, does not require a product or architecture decision, and does
+   not remove or change shipped behavior. Set the repaired finding to `fixed` in
+   the ledger, never `closed`.
 3. Report P2 and P3 findings in the final packet. Fix them only when the change
    is small, directly caused by the current feature, and clearly required by the
    project standards.
