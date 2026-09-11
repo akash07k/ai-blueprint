@@ -123,7 +123,7 @@ Core skills:
 - `fix` - document an ad-hoc bug or change into `blueprint/context/current-feature.md`
 - `tests` - add or normalize unit testing and turn on the test gate
 - `browser-tests` - explicitly add or normalize a repeatable browser test harness and document its command
-- `ci` - explicitly set up one project-specific Verify command and matching automatic GitHub checks
+- `ci` - explicitly set up one project-specific Verify command and matching automatic GitHub checks, with an optional local pre-push hook
 - `implement` - build the current spec one small, reviewed step at a time
 - `check` - prove the current spec against the running app
 - `try` - read-only manual review guide: where to go, what to click, what to expect
@@ -238,8 +238,10 @@ runner or exact combined command. Record the exact command under Commands below.
 The optional `.github/workflows/verify.yml` must run that same command for pull
 requests and pushes to the default branch. Preserve existing workflows, use the
 project's real runtime and install command, and grant only `contents: read` by
-default. This setup does not add local git hooks, coverage, browser tests,
-security scans, or version matrices. Those remain later project choices.
+default. This setup does not add coverage, browser tests, security scans, or
+version matrices; those remain later project choices. A local pre-push hook that
+runs the same `Verify` command is offered as an opt-in at the end of `/ci`, and
+`git push --no-verify` still bypasses it, so the remote ruleset stays the lock.
 
 GitHub branch protection or a ruleset can require the check after the repository
 is pushed, but that is a separate remote setting. Missing automatic GitHub
