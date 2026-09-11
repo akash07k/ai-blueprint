@@ -68,7 +68,7 @@ async function readHistoryGroup(
 
     return Promise.all(
       markdownFiles.map(async (entry) => {
-        const relativeFile = path.join(group.directory, entry.name);
+        const relativeFile = path.posix.join(group.directory, entry.name);
         const markdown = await fs.readFile(path.join(directoryPath, entry.name), "utf8");
         return parseHistoryItem(markdown, group.type, relativeFile);
       })

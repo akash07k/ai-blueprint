@@ -482,7 +482,7 @@ test("update replaces unchanged managed files and preserves project files", asyn
   assert.equal(result.added, 1);
   assert.ok(result.backupDir);
   assert.match(
-    path.relative(targetDir, result.backupDir).replaceAll(path.sep, "/"),
+    path.relative(prepared.targetDir, result.backupDir).replaceAll(path.sep, "/"),
     /^blueprint\/\.state\/backups\/2026-07-15T12-00-00Z-1\.0\.0-to-1\.1\.0-[a-f0-9]{8}$/
   );
   assert.ok(result.backupDir);
@@ -818,7 +818,7 @@ test("failed apply removes additions and restores the previous manifest", async 
   let injectedFailure = false;
 
   fs.rename = async (source, target) => {
-    if (!injectedFailure && target === path.join(targetDir, MANIFEST_PATH)) {
+    if (!injectedFailure && target === path.join(prepared.targetDir, MANIFEST_PATH)) {
       injectedFailure = true;
       const error = Object.assign(new Error("injected manifest failure"), { code: "EIO" });
       throw error;

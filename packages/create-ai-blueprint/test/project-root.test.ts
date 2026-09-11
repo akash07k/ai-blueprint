@@ -18,7 +18,7 @@ test("findProjectRoot resolves a legacy Blueprint project", async (t) => {
   await fs.mkdir(nestedDir, { recursive: true });
   await fs.writeFile(path.join(projectRoot, "AGENTS.md"), "# Project\n");
 
-  assert.equal(await findProjectRoot(nestedDir), projectRoot);
+  assert.equal(await findProjectRoot(nestedDir), await fs.realpath(projectRoot));
   assert.equal(await isBlueprintProjectRoot(projectRoot), true);
 });
 
@@ -35,7 +35,7 @@ test("findProjectRoot resolves a manifest-backed project with missing AGENTS.md"
   await fs.mkdir(path.dirname(manifestPath), { recursive: true });
   await fs.writeFile(manifestPath, "{}\n");
 
-  assert.equal(await findProjectRoot(projectRoot), projectRoot);
+  assert.equal(await findProjectRoot(projectRoot), await fs.realpath(projectRoot));
 });
 
 test("findProjectRoot accepts a file inside a Blueprint project", async (t) => {
@@ -48,7 +48,7 @@ test("findProjectRoot accepts a file inside a Blueprint project", async (t) => {
   await fs.writeFile(path.join(projectRoot, "AGENTS.md"), "# Project\n");
   await fs.writeFile(sourceFile, "export {};\n");
 
-  assert.equal(await findProjectRoot(sourceFile), projectRoot);
+  assert.equal(await findProjectRoot(sourceFile), await fs.realpath(projectRoot));
 });
 
 test("findProjectRoot returns null outside a Blueprint project", async (t) => {

@@ -43,7 +43,7 @@ test("readProjectMetadata reports an invalid manifest without hiding project ide
 
   const metadata = await readProjectMetadata(projectRoot);
 
-  assert.equal(metadata.project.root, projectRoot);
+  assert.equal(metadata.project.root, await fs.realpath(projectRoot));
   assert.equal(metadata.blueprint.version, null);
   assert.deepEqual(metadata.blueprint.adapters, ["codex", "claude"]);
   assert.deepEqual(metadata.warnings, [
