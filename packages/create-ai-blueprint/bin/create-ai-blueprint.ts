@@ -520,6 +520,31 @@ async function assertDestinationType(target: string, expected: "directory" | "fi
   } catch (error: unknown) {
     if (error instanceof Error && "code" in error) {
       if (error.code === "ENOENT") {
+        let parent = path.dirname(target);
+
+        while (parent !== path.dirname(parent)) {
+          try {
+            const parentStats = await fs.stat(parent);
+
+            if (!parentStats.isDirectory()) {
+              throw new Error(`Refusing to install at ${target}: a parent path is not a directory.`);
+            }
+
+            break;
+          } catch (parentError: unknown) {
+            if (
+              parentError instanceof Error &&
+              "code" in parentError &&
+              parentError.code === "ENOENT"
+            ) {
+              parent = path.dirname(parent);
+              continue;
+            }
+
+            throw parentError;
+          }
+        }
+
         return;
       }
 
