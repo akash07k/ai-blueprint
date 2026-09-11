@@ -179,7 +179,7 @@ full tour and command options.
 | **/brief** | Preview an upcoming feature without changing project state. |
 | **/browser-tests** | Add or normalize an optional repeatable browser harness. |
 | **/check** | Prove the current spec against the real application. |
-| **/ci** | Align one project Verify command with GitHub checks. |
+| **/ci** | Align one project Verify command with GitHub checks, plus an optional pre-push hook. |
 | **/complete** | Run final gates, archive the work, and request merge approval. |
 | **/continuous** | Complete reviewed build-plan items serially with local Git work. |
 | **/debug** | Reproduce and isolate a failure without editing code. |
@@ -285,6 +285,10 @@ requests and default-branch pushes. Blueprint does not invent a test runner,
 coverage target, browser suite, security scan, or version matrix just to fill
 the workflow.
 
+At the end, `ci` offers an optional local pre-push hook that runs the same
+Verify command before each push. The offer defaults to no, and
+`git push --no-verify` bypasses the hook, so a GitHub ruleset remains the lock.
+
 Read [CI Setup](https://ai-blueprint.dev/docs/commands/ci/) for the full contract.
 
 ## Optional automation
@@ -332,7 +336,7 @@ Use only what the project needs:
 - `status` reports progress, drift, blockers, and the suggested next action.
 - `tests` adds or normalizes stack-native unit testing.
 - `browser-tests` adds an explicit repeatable browser harness.
-- `ci` aligns one project Verify command with GitHub checks.
+- `ci` aligns one project Verify command with GitHub checks and offers an optional pre-push hook.
 - `prototype` creates throwaway static mockups before the build loop.
 - `release` prepares local Render or Vercel configuration and readiness checks.
 

@@ -3,6 +3,33 @@
 Notable changes to AI Blueprint are documented here. Release dates reflect the
 published `create-ai-blueprint` package.
 
+## [1.7.0] - 2026-09-11
+
+### Added
+
+- Offer an opt-in local pre-push hook at the end of `/ci`. The question defaults
+  to no. When accepted, the hook runs the same Verify command before every push,
+  `core.hooksPath` points at `.githooks`, JavaScript and TypeScript projects gain
+  a `prepare` script that wires the hook after install, and the hook is run once
+  before it is kept. `git push --no-verify` still bypasses it, so the GitHub
+  ruleset remains the lock.
+
+### Fixed
+
+- Reject an installation target below a regular file before copying on every
+  platform, instead of failing later with a raw filesystem error, contributed by
+  [@akash07k](https://github.com/akash07k).
+- Report history archive identifiers with forward slashes on Windows so status
+  and the dashboard match repository paths, contributed by
+  [@akash07k](https://github.com/akash07k).
+
+### Changed
+
+- Pinned the npm version used by the trusted publishing workflow and added a
+  Windows CI job that runs the installer test suite alongside the Ubuntu Node 22
+  and Node 24 matrix, contributed by
+  [@akash07k](https://github.com/akash07k).
+
 ## [1.6.1] - 2026-09-08
 
 ### Fixed
