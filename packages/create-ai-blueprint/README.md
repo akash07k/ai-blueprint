@@ -8,6 +8,11 @@ It works with any stack and installs inside an app you have already scaffolded.
 Plans, specs, project context, findings, configuration, and completed-work
 history stay as readable files in your repository.
 
+Across that workflow, proportional-engineering guidance keeps plans and code
+limited to current requirements. It prefers existing project and platform
+capabilities before new machinery while preserving real trust and data-integrity
+boundaries.
+
 [![npm version](https://img.shields.io/npm/v/create-ai-blueprint?style=flat-square&color=155eef)](https://www.npmjs.com/package/create-ai-blueprint)
 [![Validate Blueprint](https://github.com/aiblueprinthq/ai-blueprint/actions/workflows/validate.yml/badge.svg)](https://github.com/aiblueprinthq/ai-blueprint/actions/workflows/validate.yml)
 [![MIT license](https://img.shields.io/npm/l/create-ai-blueprint?style=flat-square&color=155eef)](LICENSE)
