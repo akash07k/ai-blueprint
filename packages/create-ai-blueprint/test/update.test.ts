@@ -194,23 +194,24 @@ test("interactive installs default to Claude Code and Codex", async () => {
   });
 });
 
-test("global CLI installation is offered after interactive installs and updates", () => {
-  assert.equal(shouldOfferGlobalCliInstall(parseArgs([]), true), true);
-  assert.equal(shouldOfferGlobalCliInstall(parseArgs([]), false), false);
+test("global CLI installation is offered for published interactive installs and updates", () => {
+  assert.equal(shouldOfferGlobalCliInstall(parseArgs([]), true), false);
+  assert.equal(shouldOfferGlobalCliInstall(parseArgs([]), true, false), true);
+  assert.equal(shouldOfferGlobalCliInstall(parseArgs([]), false, false), false);
   assert.equal(
-    shouldOfferGlobalCliInstall(parseArgs(["--yes"]), true),
+    shouldOfferGlobalCliInstall(parseArgs(["--yes"]), true, false),
     false
   );
   assert.equal(
-    shouldOfferGlobalCliInstall(parseArgs(["update"]), true),
+    shouldOfferGlobalCliInstall(parseArgs(["update"]), true, false),
     true
   );
   assert.equal(
-    shouldOfferGlobalCliInstall(parseArgs(["update"]), false),
+    shouldOfferGlobalCliInstall(parseArgs(["update"]), false, false),
     false
   );
   assert.equal(
-    shouldOfferGlobalCliInstall(parseArgs(["update", "--yes"]), true),
+    shouldOfferGlobalCliInstall(parseArgs(["update", "--yes"]), true, false),
     false
   );
   assert.equal(isGlobalCliInstallConfirmed("y"), true);

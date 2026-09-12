@@ -850,12 +850,14 @@ async function readCommandOutput(
 
 function shouldOfferGlobalCliInstall(
   options: CliOptions,
-  isTTY: boolean | undefined = process.stdin.isTTY
+  isTTY: boolean | undefined = process.stdin.isTTY,
+  sourceCheckout: boolean = isSourceCheckout()
 ): boolean {
   return (
     (options.command === "install" || options.command === "update") &&
     !options.yes &&
-    isTTY === true
+    isTTY === true &&
+    !sourceCheckout
   );
 }
 
@@ -1018,6 +1020,10 @@ function findPackageRoot(startDir: string): string {
 
     current = parent;
   }
+}
+
+function isSourceCheckout(root: string = packageRoot): boolean {
+  return fsSync.existsSync(path.join(root, "scripts", "prepare-template.ts"));
 }
 
 function formatMissingTemplateMessage(templateRoot: string): string {
