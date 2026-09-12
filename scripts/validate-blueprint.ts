@@ -354,7 +354,8 @@ async function validateVerificationContract(): Promise<void> {
         "This skill is always optional",
         "Never start it automatically from `/onboard`",
         "Do not write either file in the same response that first presents them",
-        "stop before generating `blueprint/context/project-overview.md`"
+        "stop before generating `blueprint/context/project-overview.md`",
+        "Follow the proportional-engineering contract in `AGENTS.md`"
       ]
     ],
     [
@@ -383,12 +384,17 @@ async function validateVerificationContract(): Promise<void> {
         "overview must remain below 20,000 bytes",
         "normalize only build-plan completion markers",
         "without treating completed features as overview drift",
+        "Omit it when the usage-model section",
+        "absent, unanswered, or contains only worksheet prompts",
         "Never create additional generated context files"
       ]
     ],
     [
       ".agents/skills/adopt/SKILL.md",
-      ["Run /ci or $ci when you want automatic GitHub checks."]
+      [
+        "Run /ci or $ci when you want automatic GitHub checks.",
+        "Follow and preserve the proportional-engineering contract in `AGENTS.md`"
+      ]
     ],
     [
       ".agents/skills/ci/SKILL.md",
@@ -426,6 +432,9 @@ async function validateVerificationContract(): Promise<void> {
     [
       ".agents/skills/implement/SKILL.md",
       [
+        "Add an abstraction, dependency, service, configuration surface, compatibility",
+        "only when the approved spec or an established repository requirement needs it now",
+        "Run a proportionality check before final verification",
         "declares a `Verify` command, run that exact",
         "fallback build and tests",
         "verification.logicTests: required",
@@ -458,6 +467,12 @@ async function validateVerificationContract(): Promise<void> {
     [
       ".agents/skills/feature/SKILL.md",
       [
+        "Apply proportional engineering before drafting",
+        "usage-model, data-model, stack, UI, security, or deployment",
+        "Unknown scale or future extensibility defaults to the smaller reversible design",
+        "Treat a trust or data-integrity boundary as established",
+        "Untuned stack-specific standards in `coding-standards.md` are not established requirements",
+        "repository-first tenant scope",
         "Build one authoritative feature packet",
         "Do not read the whole overview by default",
         "Do not invent presets, defaults, limits, permissions",
@@ -487,6 +502,7 @@ async function validateVerificationContract(): Promise<void> {
     [
       ".agents/skills/fix/SKILL.md",
       [
+        "Adding a missing authorization, ownership, validation, escaping, or redaction check",
         "first heading must be exactly",
         "`# Fix: <title>`",
         "`**Type:** Fix` contract"
@@ -495,6 +511,11 @@ async function validateVerificationContract(): Promise<void> {
     [
       ".agents/skills/audit/SKILL.md",
       [
+        "For a proportionality finding, state in **Suggested fix** what can be deleted",
+        "Untuned stack-specific template defaults are not established requirements",
+        "Use `None` when no current requirement would be lost",
+        "An otherwise pure proportionality finding is P2 or P3",
+        "require an explicit user decision and never describe it as an automatic repair",
         "`/audit independent current` is a two-context workflow",
         "Never let a builder complete its own independent request",
         "A stale receipt is no receipt",
@@ -622,12 +643,16 @@ async function validateVerificationContract(): Promise<void> {
         "Claude uses legacy direct context imports",
         "review.independentExecution",
         "Independent review defaults to `when-sensitive`",
-        "defaults to\n     `automatic`"
+        "defaults to\n     `automatic`",
+        "Follow the proportional-engineering contract in `AGENTS.md`",
+        "healthy\n     unknown context, not an incomplete requirement"
       ]
     ],
     [
       ".agents/skills/autopilot/SKILL.md",
       [
+        "Follow the proportional-engineering contract in `AGENTS.md` throughout this run",
+        "does not remove or change shipped behavior",
         "exact `Verify` command from `AGENTS.md`",
         "combines `/feature` or `/fix` with `/implement`",
         "option to walk through the completed code",
@@ -642,6 +667,8 @@ async function validateVerificationContract(): Promise<void> {
     [
       ".agents/skills/continuous/SKILL.md",
       [
+        "Follow the proportional-engineering contract in `AGENTS.md` throughout this run",
+        "does not remove or change shipped behavior",
         "Run the exact documented `Verify` command",
         "one clean local main commit per completed feature",
         "Never push the default branch",
@@ -661,18 +688,31 @@ async function validateVerificationContract(): Promise<void> {
       [
         "Independent review defaults to `when-sensitive`",
         "execution defaults to `automatic`",
-        "disables\nautomatic selection for that workflow without disabling explicit independent\naudits"
+        "disables\nautomatic selection for that workflow without disabling explicit independent\naudits",
+        "Follow and preserve the proportional-engineering contract in `AGENTS.md`"
       ]
     ],
     [
       "AGENTS.md",
       [
+        "## Proportional engineering",
+        "Unknown scale or extensibility defaults to the smaller reversible design",
+        "Derive trust and data-integrity boundaries from actual reachability",
+        "Ask only when an unknown materially changes behavior",
+        "Stack-specific template standards apply only when the project uses that stack",
         "## Automatic verification",
         "`contents: read`",
         "spawns a generic child through the current runtime",
         "never requires or discovers global agent roles",
         "Independent review defaults to `when-sensitive`",
         "Its default, `automatic`"
+      ]
+    ],
+    [
+      "blueprint/project-plan.md",
+      [
+        "## 9. Usage model and constraints (optional)",
+        "Unknown does not mean enterprise, hostile, multi-tenant, or single-user"
       ]
     ],
     [

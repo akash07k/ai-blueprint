@@ -124,6 +124,7 @@ If there is no active spec:
 
 Autopilot may continue past this spec gate because the user explicitly invoked
 Autopilot. Still report what the critique changed in the final packet.
+Follow the proportional-engineering contract in `AGENTS.md` throughout this run.
 
 ## Step 3 - create or reuse the branch
 
@@ -259,8 +260,9 @@ For every finding:
    local project patterns. An audit finding is evidence to investigate, not an
    automatic instruction to edit.
 2. Repair confirmed P0 and P1 findings when the fix stays inside the approved
-   feature scope and does not require a product or architecture decision. Set
-   the repaired finding to `fixed` in the ledger, never `closed`.
+   feature scope, does not require a product or architecture decision, and does
+   not remove or change shipped behavior. Set the repaired finding to `fixed` in
+   the ledger, never `closed`.
 3. Report P2 and P3 findings in the final packet. Fix them only when the change
    is small, directly caused by the current feature, and clearly required by the
    project standards.

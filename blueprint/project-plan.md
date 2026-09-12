@@ -40,3 +40,12 @@ Describe the look and feel. Add examples if you want
 Target host if known, such as Render or Vercel. Include app type, build command,
 start command or output directory, env vars by name, database or storage needs,
 workers or cron jobs, health check path, and domain notes if you know them.
+
+## 9. Usage model and constraints (optional)
+
+Record only what is known and relevant: expected user count and approximate scale;
+local, internal, or internet-facing operation; trusted or adversarial users;
+single-tenant or multi-tenant use when applicable; required security, compliance,
+availability, or audit constraints; and explicit non-requirements. Leave this
+section unanswered when those facts are not established. Unknown does not mean
+enterprise, hostile, multi-tenant, or single-user.

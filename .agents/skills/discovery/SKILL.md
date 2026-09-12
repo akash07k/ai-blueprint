@@ -72,6 +72,10 @@ clear instead of racing to the next category. Do not ask the user to repeat fact
 already established in the conversation or repository. Do not force irrelevant
 topics merely to complete a checklist.
 
+Follow the proportional-engineering contract in `AGENTS.md`: ask about optional
+usage or trust constraints only when they materially change the solution, record
+established non-requirements, and leave unknowns blank.
+
 Periodically return a compact discovery snapshot with:
 
 - confirmed decisions

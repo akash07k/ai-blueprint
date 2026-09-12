@@ -5,6 +5,14 @@ published `create-ai-blueprint` package.
 
 ## [Unreleased]
 
+### Added
+
+- Added proportional-engineering guidance across planning, specification,
+  implementation, automated workflows, and audit. New abstractions,
+  dependencies, services, configuration, and specialized security machinery
+  now require a current need, reducing unnecessary generated code and repeated
+  context while preserving real trust and data-integrity boundaries.
+
 ### Fixed
 
 - Made `npm run link:local` safely repeatable by replacing its existing global

@@ -46,6 +46,10 @@ Blueprint adds a controlled loop:
 
 - **Spec before code.** The agent writes a feature or fix spec and stops for
   review before implementation.
+- **Proportional engineering.** Plans and builds require a current need before
+  adding abstractions, dependencies, services, configuration, or specialized
+  security machinery. Unknown scale defaults to the smaller reversible design,
+  while real trust and data-integrity boundaries still apply.
 - **Explain the result.** Every completed implementation offers a read-only code
   walkthrough, regardless of the configured review cadence.
 - **One work item at a time.** The current feature, fix, or rollback has one
