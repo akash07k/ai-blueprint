@@ -354,7 +354,8 @@ async function validateVerificationContract(): Promise<void> {
         "This skill is always optional",
         "Never start it automatically from `/onboard`",
         "Do not write either file in the same response that first presents them",
-        "stop before generating `blueprint/context/project-overview.md`"
+        "stop before generating `blueprint/context/project-overview.md`",
+        "Follow the proportional-engineering contract in `AGENTS.md`"
       ]
     ],
     [
@@ -390,7 +391,10 @@ async function validateVerificationContract(): Promise<void> {
     ],
     [
       ".agents/skills/adopt/SKILL.md",
-      ["Run /ci or $ci when you want automatic GitHub checks."]
+      [
+        "Run /ci or $ci when you want automatic GitHub checks.",
+        "Follow and preserve the proportional-engineering contract in `AGENTS.md`"
+      ]
     ],
     [
       ".agents/skills/ci/SKILL.md",
@@ -640,16 +644,14 @@ async function validateVerificationContract(): Promise<void> {
         "review.independentExecution",
         "Independent review defaults to `when-sensitive`",
         "defaults to\n     `automatic`",
-        "The optional Usage model and constraints section may be blank",
-        "unanswered, or still contain only the shipped worksheet prompts",
-        "unknown and healthy"
+        "Follow the proportional-engineering contract in `AGENTS.md`",
+        "healthy\n     unknown context, not an incomplete requirement"
       ]
     ],
     [
       ".agents/skills/autopilot/SKILL.md",
       [
-        "Never stop for a reversible internal detail",
-        "only when the approved spec or an established repository requirement needs it now",
+        "Follow the proportional-engineering contract in `AGENTS.md` throughout this run",
         "does not remove or change shipped behavior",
         "exact `Verify` command from `AGENTS.md`",
         "combines `/feature` or `/fix` with `/implement`",
@@ -665,8 +667,7 @@ async function validateVerificationContract(): Promise<void> {
     [
       ".agents/skills/continuous/SKILL.md",
       [
-        "Never stop for a reversible internal detail",
-        "only when the approved spec or an established repository requirement needs it now",
+        "Follow the proportional-engineering contract in `AGENTS.md` throughout this run",
         "does not remove or change shipped behavior",
         "Run the exact documented `Verify` command",
         "one clean local main commit per completed feature",
@@ -687,7 +688,8 @@ async function validateVerificationContract(): Promise<void> {
       [
         "Independent review defaults to `when-sensitive`",
         "execution defaults to `automatic`",
-        "disables\nautomatic selection for that workflow without disabling explicit independent\naudits"
+        "disables\nautomatic selection for that workflow without disabling explicit independent\naudits",
+        "Follow and preserve the proportional-engineering contract in `AGENTS.md`"
       ]
     ],
     [

@@ -138,9 +138,7 @@ plans.
 
 Do not invent an unanswered product, data, architecture, auth, billing, or visual
 decision. Stop with the exact decision needed.
-Never stop for a reversible internal detail with no user-visible, security,
-persisted-data, interoperability, or cost consequence; choose the smaller
-repository-native option.
+Follow the proportional-engineering contract in `AGENTS.md` throughout this run.
 
 ### 2.2 Create or resume the feature branch
 
@@ -161,10 +159,6 @@ Build the spec in order, one small diff at a time. Continuous Mode does not paus
 for `workflow.stepReview`; its explicit invocation replaces those review
 prompts with self-review plus the final packet.
 
-Add an abstraction, dependency, service, configuration surface, compatibility
-layer, or security mechanism only when the approved spec or an established
-repository requirement needs it now.
-
 For each step:
 
 1. Implement only that step.
@@ -172,10 +166,8 @@ For each step:
 3. Run the exact documented `Verify` command when present. Otherwise run the
    documented build and existing relevant tests.
 4. Enforce `verification.logicTests` and `verification.uiEvidence`.
-5. Self-review scope, error paths, security boundaries, project conventions,
-   tests, and whether every new layer traces to a current requirement instead of
-   duplicating existing code, the standard library, the platform, or an installed
-   dependency.
+5. Self-review scope, error paths, security boundaries, project conventions, and
+   tests.
 6. Repair failures within scope, rerun affected evidence, and check off the step
    only when it passes.
 7. When `workflow.checkpointCommits` is `enabled`, create a conventional local

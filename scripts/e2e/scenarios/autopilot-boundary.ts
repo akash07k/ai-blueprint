@@ -49,12 +49,6 @@ async function run(t: Runner) {
   );
   t.write("src/greeting.js", 'console.log("Hello world");\n');
   t.write("blueprint/context/current-feature.md", FIX_SPEC);
-  const configText = t.read("blueprint/config.json");
-  if (configText === null) throw new Error("Fixture is missing blueprint/config.json.");
-  const config = JSON.parse(configText);
-  config.workflow.checkpointCommits = "enabled";
-  config.qualityGates.regular.independentReview = "manual";
-  t.write("blueprint/config.json", JSON.stringify(config, null, 2) + "\n");
   t.gitInit();
   t.git("add", "-A");
   t.git("commit", "-m", "chore: create autopilot fixture");
@@ -109,8 +103,8 @@ async function run(t: Runner) {
     t.git("show", "main:src/greeting.js").includes("Hello world")
   );
   t.check(
-    "the fix branch contains at least one checkpoint commit",
-    Number(t.git("rev-list", "--count", `main..${currentBranch}`)) >= 1
+    "checkpoint commits stay disabled by default",
+    Number(t.git("rev-list", "--count", `main..${currentBranch}`)) === 0
   );
   t.check(
     "no completion archive was added",
@@ -120,6 +114,6 @@ async function run(t: Runner) {
 
 export default {
   name: "autopilot-boundary",
-  description: "Autopilot may checkpoint passing work but cannot complete or merge it",
+  description: "Autopilot respects default checkpoint policy and cannot complete or merge",
   run
 };

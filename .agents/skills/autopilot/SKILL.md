@@ -117,17 +117,13 @@ If there is no active spec:
    - undefined contracts
    - missing design reference
    - scope creep
-   - speculative abstractions, dependencies, services, configuration surfaces,
-     compatibility layers, or security mechanisms
    - vague done-whens
    - missing testing plan when `AGENTS.md` declares a test command
 4. Apply the spec fixes.
 
 Autopilot may continue past this spec gate because the user explicitly invoked
 Autopilot. Still report what the critique changed in the final packet.
-Never stop for a reversible internal detail with no user-visible, security,
-persisted-data, interoperability, or cost consequence; choose the smaller
-repository-native option.
+Follow the proportional-engineering contract in `AGENTS.md` throughout this run.
 
 ## Step 3 - create or reuse the branch
 
@@ -147,10 +143,6 @@ Do not pause for user approval after each passing step, regardless of the
 configured `workflow.stepReview` value. The review happens at the final packet
 unless a hard stop is hit.
 
-Add an abstraction, dependency, service, configuration surface, compatibility
-layer, or security mechanism only when the approved spec or an established
-repository requirement needs it now.
-
 For every step:
 
 1. Implement only that step.
@@ -169,8 +161,6 @@ For every step:
 4. Self-review the diff for the step:
    - does it match the spec?
    - did it add scope?
-   - does every new layer trace to a current requirement, and can existing code,
-     the standard library, the platform, or an installed dependency replace it?
    - is the error path handled?
    - did it follow `coding-standards.md`?
    - are tests present for new in-scope logic when the test gate is on?

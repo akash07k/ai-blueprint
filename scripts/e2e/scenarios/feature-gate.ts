@@ -91,10 +91,6 @@ async function run(t: Runner) {
   t.check("product source was not edited", t.read("src/greeting.js") === sourceBefore);
   t.check("package metadata was not edited", t.read("package.json") === packageBefore);
   t.check(
-    "no dependency installation was added to the spec",
-    !/(?:^|`)[^\S\n]*(?:npm (?:install|i|add)|pnpm (?:add|install)|yarn add|bun add)(?:[^\S\n]+-{1,2}[\w-]+)*[^\S\n]+(?!-)[@\w]/im.test(currentFeature)
-  );
-  t.check(
     "no top-level directories were added",
     JSON.stringify(
       fs

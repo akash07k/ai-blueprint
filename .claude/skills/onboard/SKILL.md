@@ -144,7 +144,8 @@ Include only commands that exist or are intentionally available:
 If no test command exists, say so explicitly. Do not claim tests are a gate until
 a real test command is configured.
 
-Preserve the Proportional engineering contract in `AGENTS.md`.
+Follow and preserve the proportional-engineering contract in `AGENTS.md` when
+adapting commands, standards, and context to the detected project.
 
 If `CLAUDE.md` exists and still has the placeholder `# Project Name`, replace it
 with the detected project name. Keep `@AGENTS.md`. Remove direct imports of
@@ -158,8 +159,6 @@ Preserve unrelated user imports. Do not move detailed app context into
 Update `blueprint/context/coding-standards.md` so it matches the detected stack.
 Keep stable, tool-agnostic sections such as writing style, comments, scope, and
 testing philosophy. Replace stack-specific defaults that do not apply.
-Untuned stack-specific template defaults are not established project
-requirements.
 
 Cover the practical conventions the build loop needs:
 
@@ -283,8 +282,7 @@ Recommend option 1 by default. If the user chooses option 2:
 - Keep `AGENTS.md` tracked. It remains the lightweight public project guide for
   commands and conventions.
 - Make `AGENTS.md` public-safe: keep project description, commands, testing gate,
-  coding conventions, and the Proportional engineering contract, but remove or
-  avoid Blueprint workflow explanations,
+  and coding conventions, but remove or avoid Blueprint workflow explanations,
   hidden adapter paths, workflow-document pointers, and core skill lists that
   would expose the local-only workflow.
 - Explain that local-only mode hides the workflow contents from the repo, but the
