@@ -14,6 +14,7 @@
     "test:routing": "tsx --test scripts/evals/routing.test.ts && tsx scripts/evals/routing.ts --min-rank1 90",
     "test:sandbox": "tsx --test scripts/scaffold-sandbox.test.ts scripts/clear-sandbox.test.ts",
     "test:activity": "tsx --test scripts/run-state-helper.test.ts",
+    "test:link-local": "tsx --test scripts/link-local.test.ts",
     "test:package": "tsx scripts/smoke-package.ts",
     "test:e2e": "tsx scripts/e2e/run.ts",
     "sandbox": "tsx scripts/scaffold-sandbox.ts",

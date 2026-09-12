@@ -134,6 +134,9 @@ async function main(): Promise<void> {
       "node_modules",
       "create-ai-blueprint"
     );
+    await requireMissing(
+      path.join(installedPackageRoot, "scripts", "prepare-template.ts")
+    );
     const binary = path.join(installedPackageRoot, "dist", "bin", "create-ai-blueprint.js");
     const metadata = parseRecord(
       await fs.readFile(path.join(installedPackageRoot, "package.json"), "utf8"),

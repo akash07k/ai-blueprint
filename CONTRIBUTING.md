@@ -36,11 +36,12 @@ framework abstractions do not belong in this repository.
 | `npm test` | Run the installer unit tests. |
 | `npm run test:routing` | Run deterministic skill selection cases without invoking an AI agent. |
 | `npm run test:sandbox` | Run deterministic tests for the inspectable scaffold runner. |
+| `npm run test:link-local` | Verify that local linking can safely replace its existing global registration. |
 | `npm run test:package` | Pack the npm artifact and smoke-test individual, combined, default, and legacy adapter installs. |
 | `npm run sandbox` | Scaffold a minimal app, run the local packed Blueprint through its real prompts, verify it, and start its server. |
 | `npm run sandbox:clear` | List every saved sandbox run, ask for confirmation, then delete those runs. |
 | `npm run sandbox:demo` | Run the interactive sandbox with example project and build plans ready for workflow testing. |
-| `npm run link:local` | Build this checkout, prepare its template, and link `create-ai-blueprint` and `blueprint` globally so they run from local files. |
+| `npm run link:local` | Build this checkout, prepare its template, and replace the global `create-ai-blueprint` and `blueprint` commands with links to the local files. |
 | `npm run unlink:local` | Remove the global link created by `npm run link:local`. |
 | `E2E_ACCEPT_RISK=1 npm run test:e2e` | Run all live-agent behavior scenarios in scratch repositories. |
 
@@ -70,7 +71,11 @@ blueprint status
 
 Re-run `npm run link:local` after editing the source. The linked commands run the
 compiled `dist/` output and a copied `template/`, not the source files directly, so
-edits are not picked up until both are rebuilt.
+edits are not picked up until both are rebuilt. Re-running the command removes the
+existing global package registration before recreating the link, so a separate
+`npm run unlink:local` is not required. Installer runs from the linked checkout
+also skip the optional prompt that would replace the local commands with the
+registry package.
 
 `npm run unlink:local` runs `npm rm --global create-ai-blueprint`, which removes any
 global copy of the package, whether it was linked from a checkout or installed from

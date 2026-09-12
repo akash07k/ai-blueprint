@@ -28,6 +28,10 @@ const checks: CheckCommand[] = [
     ...npmInvocation(["run", "test:activity"])
   },
   {
+    name: "Local link regression test",
+    ...npmInvocation(["run", "test:link-local"])
+  },
+  {
     name: "Installer unit tests",
     ...npmInvocation(["--prefix", "packages/create-ai-blueprint", "test"])
   },

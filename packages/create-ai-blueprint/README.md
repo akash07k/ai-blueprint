@@ -295,11 +295,11 @@ npm install --global create-ai-blueprint@latest
 ```
 
 The prompt defaults to no and is skipped for matching versions, non-interactive
-runs, and `--yes` runs. Accepting it installs or refreshes the CLI at the same
-version used by the npx command. Global installation exposes the shorter forms
-`blueprint status`, `blueprint status --json`, and `blueprint dashboard`. Use
-`--target ./my-app` to inspect an explicit project directory. Status never edits
-project or Git state.
+runs, `--yes` runs, and runs from a source checkout of this repository.
+Accepting it installs or refreshes the CLI at the same version used by the npx
+command. Global installation exposes the shorter forms `blueprint status`,
+`blueprint status --json`, and `blueprint dashboard`. Use `--target ./my-app` to
+inspect an explicit project directory. Status never edits project or Git state.
 
 ## Opening the local dashboard
 

@@ -3,6 +3,15 @@
 Notable changes to AI Blueprint are documented here. Release dates reflect the
 published `create-ai-blueprint` package.
 
+## [Unreleased]
+
+### Fixed
+
+- Made `npm run link:local` safely repeatable by replacing its existing global
+  package registration before recreating the local link.
+- Kept installers run from a linked source checkout from offering to replace the
+  local commands with the registry package.
+
 ## [1.7.0] - 2026-09-11
 
 ### Added
